@@ -21,7 +21,7 @@ export default function AdminDashboardPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm text-ink-muted">
         You are signed in. Modules:
       </p>
       <ul className="mt-6 space-y-2">

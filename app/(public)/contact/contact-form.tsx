@@ -21,7 +21,7 @@ export function ContactForm() {
 
   if (state.ok) {
     return (
-      <p role="status" className="mt-8 text-sm text-zinc-700 dark:text-zinc-300">
+      <p role="status" className="mt-8 text-sm text-ink">
         Thanks for reaching out — your message has been sent. We&apos;ll be in
         touch.
       </p>
@@ -66,7 +66,7 @@ export function ContactForm() {
           type="text"
           required
           maxLength={200}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
@@ -80,7 +80,7 @@ export function ContactForm() {
           type="email"
           required
           maxLength={320}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
@@ -94,21 +94,17 @@ export function ContactForm() {
           required
           rows={5}
           maxLength={5000}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
       {state.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-white dark:text-zinc-900"
-      >
+      <button type="submit" disabled={pending} className="btn-primary text-sm">
         {pending ? 'Sending…' : 'Send message'}
       </button>
     </form>

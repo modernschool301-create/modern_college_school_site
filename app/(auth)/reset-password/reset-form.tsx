@@ -11,7 +11,7 @@ export function ResetForm() {
   // Same confirmation whether or not the address exists — never reveal it.
   if (state.done) {
     return (
-      <p role="status" className="mt-8 text-sm text-zinc-700 dark:text-zinc-300">
+      <p role="status" className="mt-8 text-sm text-ink">
         If that email is registered, a reset link has been sent. Check your inbox.
       </p>
     );
@@ -29,14 +29,14 @@ export function ResetForm() {
           type="email"
           autoComplete="username"
           required
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-white dark:text-zinc-900"
+        className="btn-primary w-full text-sm"
       >
         {pending ? 'Sending…' : 'Send reset link'}
       </button>

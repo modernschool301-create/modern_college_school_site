@@ -41,21 +41,21 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
-        <span className="text-sm font-semibold">Modern College &amp; School — Admin</span>
+      <header className="flex items-center justify-between border-b border-line px-6 py-3">
+        <span className="text-sm font-semibold text-green-ink">Modern College &amp; School — Admin</span>
         <div className="flex items-center gap-4">
           <span className="text-right text-sm leading-tight">
-            <span className="block font-medium">
+            <span className="block font-medium text-ink">
               {profile?.full_name ?? 'Staff'}
             </span>
-            <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="block text-xs text-ink-muted">
               {profile?.email ?? user.email}
             </span>
           </span>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-sm border border-line px-3 py-1.5 text-sm font-medium transition-colors hover:bg-green-mist"
             >
               Log out
             </button>

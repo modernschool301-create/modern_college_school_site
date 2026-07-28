@@ -20,7 +20,7 @@ export function UpdateForm() {
           type="password"
           autoComplete="new-password"
           required
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
@@ -34,21 +34,17 @@ export function UpdateForm() {
           type="password"
           autoComplete="new-password"
           required
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full px-3 py-2 text-sm"
         />
       </div>
 
       {state.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-white dark:text-zinc-900"
-      >
+      <button type="submit" disabled={pending} className="btn-primary w-full text-sm">
         {pending ? 'Saving…' : 'Set new password'}
       </button>
     </form>

@@ -36,13 +36,13 @@ export default async function AdminContactMessagesPage() {
       <h1 className="text-2xl font-semibold">Contact Messages</h1>
 
       {error && (
-        <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-4 text-sm text-danger">
           Could not load messages: {error.message}
         </p>
       )}
 
       {messages.length === 0 ? (
-        <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-6 text-sm text-ink-muted">
           No messages yet.
         </p>
       ) : (
@@ -50,31 +50,31 @@ export default async function AdminContactMessagesPage() {
           {messages.map((m) => (
             <li
               key={m.id}
-              className="rounded-md border border-zinc-200 p-4 dark:border-zinc-800"
+              className="rounded-md border border-line bg-surface p-4"
             >
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-medium">{m.name}</span>
+                <span className="font-medium text-ink">{m.name}</span>
                 <a
                   href={`mailto:${m.email}`}
-                  className="text-zinc-600 underline underline-offset-2 dark:text-zinc-400"
+                  className="text-ink-muted underline underline-offset-2 hover:text-ink"
                 >
                   {m.email}
                 </a>
-                <span className="text-zinc-400">·</span>
-                <span className="text-zinc-500 dark:text-zinc-400">
+                <span className="text-ink-faint">·</span>
+                <span className="text-ink-muted">
                   {NPT.format(new Date(m.created_at))}
                 </span>
-                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                <span className="badge badge-neutral uppercase">
                   {m.status}
                 </span>
                 {m.verification === 'unverified_review' && (
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  <span className="badge badge-warning uppercase">
                     unverified · review
                   </span>
                 )}
               </div>
 
-              <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">
+              <p className="mt-3 whitespace-pre-wrap text-sm text-ink">
                 {m.message}
               </p>
 
@@ -84,14 +84,14 @@ export default async function AdminContactMessagesPage() {
                 className="mt-3 flex items-center gap-2"
               >
                 <input type="hidden" name="id" value={m.id} />
-                <label htmlFor={`status-${m.id}`} className="text-xs text-zinc-500">
+                <label htmlFor={`status-${m.id}`} className="text-xs text-ink-muted">
                   Set status
                 </label>
                 <select
                   id={`status-${m.id}`}
                   name="status"
                   defaultValue={m.status}
-                  className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                  className="px-2 py-1 text-sm"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -101,7 +101,7 @@ export default async function AdminContactMessagesPage() {
                 </select>
                 <button
                   type="submit"
-                  className="rounded border border-zinc-300 px-2 py-1 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  className="rounded-sm border border-line px-3 py-1 text-sm font-medium transition-colors hover:bg-green-mist"
                 >
                   Update
                 </button>
