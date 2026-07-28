@@ -179,6 +179,9 @@ About Us (including Principal's and Chairman's messages and the Executive Board)
 **Decision 11 — A backup strategy is required before launch.**
 The free database tier includes no automated backups and pauses a project after roughly a week of inactivity. For a site holding real admission leads during season, neither is acceptable. Before launch the institution either funds the paid tier (daily backups, no pausing) or commits to a scheduled, tested export with a stated acceptable data-loss window. This is a budget decision, listed in Section 33.
 
+**Decision 12 — The homepage pop-up is a single-image announcement, not a builder.**
+The school supplies a pre-designed banner image and wants it shown as a dismissible pop-up on the homepage. This is deliberately NOT a pop-up builder: no text editor, layout control, or rich content — just one uploaded image, an optional click-through link, and an on/off toggle. It is modelled as a singleton (only ever one active homepage pop-up), stored in the settings store, and managed on the Settings page. The banner is public content, served through a resizing transformation like every other public image (Decision 6), and is the lowest-risk content in the system. A general pop-up system was rejected as flexibility the school does not need.
+
 ## 7. What This System Deliberately Does Not Do
 
 - It does **not** create public accounts, log applicants in, or let them track an application. A future portal does that, separately (Decision 1).
@@ -257,6 +260,8 @@ Roughly seventeen tables and a small settings store. Every table has `created_at
 ### 8.4 Settings
 
 **settings** — a small key/value store for: homepage statistics (`stat_teachers`, `stat_students`, `stat_years`), the office notification email address(es), and site-wide toggles. Editable by Admin on the Settings page.
+
+The homepage pop-up singleton is held here as well: `popup_image` (Cloudinary reference), `popup_is_active` (boolean, default false), `popup_link_url` (optional click-through target), and `popup_alt_text` (accessibility). Because there is only ever one homepage pop-up, it needs no table of its own.
 
 ### 8.5 What There Is No Table For
 
@@ -355,6 +360,8 @@ Each entry follows the same five-part structure. Rules established in Parts I an
 3. **Frontend.** Navigation and CTAs; stats animate on scroll. No forms except the CTA link.
 4. **Backend.** Reads: latest published posts; active programmes; published testimonials (a few); the three statistics from settings.
 5. **Security.** All reads public, published rows only.
+
+**Homepage pop-up.** If `popup_is_active` is true, the homepage renders the uploaded banner in a dismissible modal (Decision 12). It appears a moment after the page paints rather than blocking initial render; it is dismissible and stays dismissed for a few days via a browser flag (cookie/localStorage); and it is mobile-first — the close control is easy to tap and the banner is expected to be portrait or square, not a wide desktop strip. If `popup_link_url` is set, the banner is clickable through to that address.
 
 ## 12. About Us — `/about`
 
@@ -469,7 +476,7 @@ Each write records the acting user and refreshes affected public pages.
 
 ### 30.1 Admin — Settings & Users — `/admin/settings`, `/admin/users`
 
-- **Settings.** Edit homepage statistics (teachers, students, years), the office notification email address(es), and site-wide toggles. Admin-only.
+- **Settings.** Edit homepage statistics (teachers, students, years), the office notification email address(es), and site-wide toggles, and the homepage pop-up: upload/replace the banner (public delivery via the signed-upload path), set an optional click-through URL, and toggle it on or off. Turning it off is the only "dismiss for everyone" control. Admin-only.
 - **Users.** All staff accounts with name, email, role, active status, and creation date. Add a new Admin (sending an invite/confirmation via Resend, landing at `/auth/confirm`), and deactivate/reactivate accounts. An Admin cannot deactivate their own account or remove their own admin status. This is the sole mechanism by which staff access is granted, so it is Admin-only at both the layout and database layers (the admin-edits-anyone policy on `profiles`, Section 9.2), and a role/active change takes effect on the affected account's next action.
 
 ### 30.2 My Account — `/account`
@@ -525,7 +532,7 @@ The riskiest surface — admissions, with anonymous signed uploads, private deli
 
 **Phase 0 — Foundation.** *In progress.* The scaffold is complete (Next.js 16 App Router, TypeScript, Tailwind v4; the `lib/supabase` client/server/service split with the service key isolated to `server-only`; middleware gating `/admin` and `/account`; the full placeholder route tree). Remaining Phase 0 work: the `profiles` table and `current_user_is_active_admin()` function with RLS; seeding the first admin by hand; staff login, session, and logout with the live role check; then password reset and `/auth/confirm`; and finally the **contact form** as the first end-to-end public write. **Definition of done:** a stranger on their own phone can send a contact message that lands in the admin list and emails the office (via the Resend onboarding domain), and staff can sign in and reset a password unaided. Prove this before proceeding — everything downstream reuses this exact pattern.
 
-**Phase 1 — Public shell & content CMS.** Homepage, static pages (About, Learning Process, Admission Procedure prose, Privacy), News, Gallery, and the admin shell for those. Establishes the design system, content refresh, Open Graph, and SEO — with no sensitive data anywhere.
+**Phase 1 — Public shell & content CMS.** Homepage, static pages (About, Learning Process, Admission Procedure prose, Privacy), News, Gallery, and the admin shell for those. Establishes the design system, content refresh, Open Graph, and SEO — with no sensitive data anywhere, and the single-image homepage pop-up (Decision 12).
 
 **Phase 2 — Remaining content modules.** Programmes (with faculty rows), Achievements, Testimonials, Scholarships, Downloads, homepage statistics, Settings, Users. Mostly familiar work over proven patterns.
 
