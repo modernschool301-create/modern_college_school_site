@@ -41,21 +41,24 @@ export function VoicePreview() {
               “{testimonial.quote}”
             </blockquote>
             <figcaption className="mt-6 flex items-center gap-4">
-              {/* Placeholder photo — a real headshot replaces this avatar. */}
+              {/* Placeholder avatar — a real headshot replaces this. The initial
+                  is decorative (aria-hidden) and lives ONLY inside this circle,
+                  so it never bleeds into the name text beside it. */}
               <span
                 aria-hidden="true"
                 className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-green-pale font-display text-2xl font-semibold text-green-brand"
               >
                 {testimonial.name.charAt(0)}
               </span>
-              <span className="text-body">
-                <span className="block font-medium text-green-ink">
+              {/* Name and programme on their own lines, clearly spaced. */}
+              <div className="flex flex-col">
+                <span className="font-medium leading-tight text-green-ink">
                   {testimonial.name}
                 </span>
-                <span className="block text-small text-ink-muted">
+                <span className="mt-1 text-small leading-tight text-ink-muted">
                   {testimonial.programme}
                 </span>
-              </span>
+              </div>
             </figcaption>
           </figure>
         ))}

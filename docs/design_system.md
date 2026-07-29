@@ -209,6 +209,18 @@ The full-bleed hero video is the site's boldest moment. It must be *impressive a
 
 **Navigation** — clean top bar, `--paper`/transparent over the hero then solid on scroll. Logo left, links center/right, a persistent `Apply now` primary button far right (the CTA should always be reachable). Mobile: hamburger to a full-height sheet.
 
+*Navigation sizing & scrim (tokens in `globals.css` `:root`):*
+
+| Token | Value | Role |
+| --- | --- | --- |
+| `--nav-height` | `80px` | Bar height — taller so the larger links + logo breathe. |
+| `--nav-logo-height` | `56px` | Visible logo height in the bar (logos delivered with Cloudinary `e_trim` so the mark fills it — no baked-in transparent padding). |
+| `--nav-link-size` | `1.0625rem` (17px) | Nav link size, weight 500, in BOTH states. |
+| `--nav-scrim-height` | `100px` | Height of the over-hero legibility scrim. |
+| `--nav-scrim` | `linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0))` | Subtle top-down dark gradient behind the nav, **over-hero state only**, so white links stay legible over LIGHT parts of the hero video without reading as a solid bar. Removed in the solid/scrolled state (which has `--paper`). |
+
+Over-hero links also carry a `text-shadow: 0 1px 3px rgba(0,0,0,0.4)` (the `.nav-legible` helper) on top of the scrim. All nav links are keyboard-focusable with the standard `--green-signature` focus ring, carry `aria-current` on the active page, and hover to an underline.
+
 **Eyebrows** — small `--text-eyebrow` in `--green-brand` above section titles, sentence case, subtle letter-spacing. Use only where they encode something real (section topic), not as decoration.
 
 **Badges/pills** — `--radius-full`, pale-green background with `--green-ink` text for neutral tags; semantic colours for status.

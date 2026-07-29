@@ -1,5 +1,15 @@
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
+import { CountUp } from './count-up';
+
+// Institutional figures. HARDCODED SENSIBLE DEFAULTS for now — these will be
+// settings-driven later (see the TODO on app/(public)/page.tsx). Real numbers
+// so the counters read 30+/1,200+/60+, never 0+.
+const STATS = [
+  { to: 30, suffix: '+', label: 'years of teaching' },
+  { to: 1200, suffix: '+', label: 'students' },
+  { to: 60, suffix: '+', label: 'teachers' },
+];
 
 const iconProps = {
   width: 26,
@@ -43,10 +53,22 @@ const BENEFITS = [
   },
 ];
 
+// One "why Modern, by the numbers" block directly under the hero: the three
+// story benefits AND the three headline stats live together here (the old
+// separate lower stats band is gone). Benefits row on top, stats row below.
 export function ThreeBenefits() {
   return (
     <Band tone="paper">
-      <Reveal stagger className="grid-auto-fit">
+      <Reveal>
+        <p className="text-eyebrow uppercase tracking-wide text-green-brand">
+          Why Modern
+        </p>
+        <h2 className="mt-2 max-w-2xl font-display text-h2 text-green-ink">
+          Trusted for a generation, by the numbers
+        </h2>
+      </Reveal>
+
+      <Reveal stagger className="mt-10 grid-auto-fit">
         {BENEFITS.map((benefit) => (
           <div
             key={benefit.text}
@@ -56,6 +78,24 @@ export function ThreeBenefits() {
               {benefit.icon}
             </span>
             <p className="text-lead text-green-ink">{benefit.text}</p>
+          </div>
+        ))}
+      </Reveal>
+
+      {/* Stats row — counts up on scroll; CountUp shows the final value
+          immediately under prefers-reduced-motion. */}
+      <Reveal
+        stagger
+        as="dl"
+        className="mt-14 grid gap-10 border-t border-line pt-14 text-center sm:grid-cols-3"
+      >
+        {STATS.map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center gap-1">
+            <dd className="font-display text-h1 font-semibold text-green-brand">
+              <CountUp to={stat.to} />
+              {stat.suffix}
+            </dd>
+            <dt className="text-small text-ink-muted">{stat.label}</dt>
           </div>
         ))}
       </Reveal>

@@ -4,7 +4,6 @@ import { ThreeBenefits } from '@/components/home/three-benefits';
 import { VoicePreview } from '@/components/home/voice-preview';
 import { ProgrammesOverview } from '@/components/home/programmes-overview';
 import { FeaturesStrip } from '@/components/home/features-strip';
-import { StatsBand } from '@/components/home/stats-band';
 import { NewsTeaser } from '@/components/home/news-teaser';
 import { ClosingCTA } from '@/components/home/closing-cta';
 import { StickyApplyCta } from '@/components/home/sticky-apply-cta';
@@ -25,14 +24,13 @@ export default function HomePage() {
       {/* Tell the nav this page owns a hero (starts transparent, solid on scroll). */}
       <HeroNavMode />
 
-      {/* Story-first order: hero → value prop → human voices → programmes →
-          supporting facilities → stats → news → closing CTA. */}
+      {/* Story-first order: hero → value prop + stats (one block) → human
+          voices → programmes → supporting facilities → news → closing CTA. */}
       <Hero media={media} />
       <ThreeBenefits />
       <VoicePreview />
       <ProgrammesOverview />
       <FeaturesStrip />
-      <StatsBand />
       <NewsTeaser />
       <ClosingCTA />
 

@@ -15,9 +15,11 @@ export default function PublicLayout({
   // Logo URLs built server-side (cloud name stays off the client). logo2 is the
   // solid-white mark for the dark/transparent state; logo1 is the green mark
   // for the solid --paper state. Empty string → nav falls back to a wordmark.
+  // e_trim strips the transparent padding baked into the logo PNGs so the
+  // visible wordmark fills the (now larger) nav logo height in both states.
   const cloud = process.env.CLOUDINARY_CLOUD_NAME ?? '';
-  const logoLight = cloudinaryImage(cloud, 'modern/logo2');
-  const logoDark = cloudinaryImage(cloud, 'modern/logo1');
+  const logoLight = cloudinaryImage(cloud, 'modern/logo2', 'e_trim');
+  const logoDark = cloudinaryImage(cloud, 'modern/logo1', 'e_trim');
 
   return (
     <NavHeroProvider>

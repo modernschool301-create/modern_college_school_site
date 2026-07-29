@@ -110,6 +110,18 @@
   /* Motion durations (Section 6): 200–260ms. */
   --dur-fast: 200ms;
   --dur: 260ms;
+
+  /* Navigation (design_system.md Section 8 → "Navigation sizing & scrim").
+     Bar height, the over-hero legibility scrim, and the shared nav link size. */
+  --nav-height: 80px;                 /* taller bar so larger links + logo breathe */
+  --nav-logo-height: 56px;            /* visible logo height in the bar */
+  --nav-link-size: 1.0625rem;         /* 17px links, medium weight */
+  --nav-scrim-height: 100px;          /* top-down scrim behind the over-hero nav */
+  --nav-scrim: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.30) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 /* ============================================================================
@@ -306,8 +318,22 @@
   .reveal-stagger[data-visible="true"] > *:nth-child(5) { transition-delay: 240ms; }
 }
 
-/* Subtle text shadow so white nav text stays legible over the hero video half
-   WITHOUT painting a bar over the top (the nav itself is truly transparent). */
+/* Text shadow so white nav text stays legible over the LIGHT parts of the hero
+   video (faces, light jerseys), on top of the scrim below. */
 .nav-legible {
-  text-shadow: 0 1px 12px rgba(14, 42, 28, 0.55);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Legibility scrim (design_system.md Section 8): a subtle top-down dark gradient
+   behind the nav, full width, ONLY in the transparent/over-hero state. Dark
+   enough that white links survive over light video, transparent enough that it
+   never reads as a solid bar. The solid/scrolled state uses --paper instead and
+   does not render this. */
+.nav-scrim {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--nav-scrim-height);
+  background: var(--nav-scrim);
+  pointer-events: none;
 }

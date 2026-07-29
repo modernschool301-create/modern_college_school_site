@@ -10,10 +10,18 @@ import type { HeroMedia } from '@/lib/cloudinary-url';
 // split. On mobile the two stack (panel on top, 16:9 video below) and never
 // overlap, which fixes the old text/menu collision.
 export function Hero({ media }: { media: HeroMedia }) {
-  const [playVideo, setPlayVideo] = useState(false);
+  // Default to the VIDEO so the real <video> element is in the server-rendered
+  // output (and plays as soon as the page hydrates on capable devices). We only
+  // DOWNGRADE to the poster still for reduced-motion, small screens, or slow
+  // connections — the cases where a heavy autoplaying video hurts more than it
+  // helps (design_system.md Section 6 & 7).
+  const [showVideo, setShowVideo] = useState(true);
 
   useEffect(() => {
-    if (!media.hasMedia) return;
+    if (!media.hasMedia) {
+      setShowVideo(false);
+      return;
+    }
 
     const reducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
@@ -29,17 +37,20 @@ export function Hero({ media }: { media: HeroMedia }) {
       conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType ?? '')),
     );
 
-    // Autoplay is unreliable on mobile, so there we always use the poster.
-    if (!reducedMotion && !smallScreen && !slowConnection) {
-      setPlayVideo(true);
+    // Reduced motion / mobile / data-saver → show the poster still instead.
+    if (reducedMotion || smallScreen || slowConnection) {
+      setShowVideo(false);
     }
   }, [media.hasMedia]);
 
   return (
     <section data-hero className="w-full bg-green-forest">
       <div className="grid md:min-h-[88vh] md:grid-cols-2">
-        {/* LEFT — solid green message panel */}
-        <div className="flex items-center bg-green-forest px-6 py-16 sm:px-10 lg:px-16">
+        {/* LEFT — solid green message panel. Extra TOP padding (pt-28) clears
+            the overlaid fixed nav (--nav-height: 80px) so the headline is never
+            hidden under it; on desktop the panel is tall and vertically centred,
+            so the clearance is comfortable there too. */}
+        <div className="flex items-center bg-green-forest px-6 pb-16 pt-28 sm:px-10 lg:px-16">
           <div className="max-w-xl">
             <p className="text-eyebrow uppercase tracking-wide text-green-pale">
               Bhaktapur&apos;s trusted choice for +2 &amp; Bachelor&apos;s
@@ -73,7 +84,11 @@ export function Hero({ media }: { media: HeroMedia }) {
             green-ink base so it's never a blank/black area while media loads. */}
         <div className="relative aspect-video bg-green-ink md:aspect-auto">
           {media.hasMedia &&
-            (playVideo ? (
+            (showVideo ? (
+              // A real <video> (NOT the poster still). The .mp4 source is the
+              // Cloudinary VIDEO delivery URL; poster= the so_0 .jpg still shows
+              // instantly while it loads and stays put if autoplay is blocked,
+              // so the hero is never blank.
               <video
                 className="absolute inset-0 h-full w-full object-cover"
                 autoPlay
@@ -86,6 +101,7 @@ export function Hero({ media }: { media: HeroMedia }) {
                 aria-hidden="true"
               />
             ) : (
+              // Poster fallback for reduced-motion / mobile / slow connections.
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 className="absolute inset-0 h-full w-full object-cover"

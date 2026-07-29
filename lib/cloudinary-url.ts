@@ -11,10 +11,17 @@ export type HeroMedia = {
 };
 
 // Public image delivery URL (logos, etc.) — optimized format/quality. Only the
-// public cloud name + public ID appear; no secret involved.
-export function cloudinaryImage(cloudName: string, publicId: string): string {
+// public cloud name + public ID appear; no secret involved. `extra` appends any
+// additional Cloudinary transforms (e.g. `e_trim` to strip transparent padding
+// baked into a logo PNG so the visible mark fills its box).
+export function cloudinaryImage(
+  cloudName: string,
+  publicId: string,
+  extra = '',
+): string {
   if (!cloudName || !publicId) return '';
-  return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`;
+  const transforms = ['f_auto', 'q_auto', extra].filter(Boolean).join(',');
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms}/${publicId}`;
 }
 
 export function heroMedia(cloudName: string, publicId: string): HeroMedia {
@@ -27,8 +34,10 @@ export function heroMedia(cloudName: string, publicId: string): HeroMedia {
   return {
     hasMedia: true,
     // Optimized, audio stripped (it's muted anyway): quality/format auto,
-    // codec auto, no audio channel.
-    videoUrl: `${base}/q_auto,f_auto,vc_auto,ac_none/${publicId}`,
+    // codec auto, no audio channel. Delivered explicitly as .mp4 (H.264-family)
+    // so it's a real, inline-playable <video> source on every browser — NOT the
+    // so_0 .jpg still, which is only the poster below.
+    videoUrl: `${base}/q_auto,f_auto,vc_auto,ac_none/${publicId}.mp4`,
     // Poster = frame zero of the SAME asset, delivered as an optimized jpg, so
     // the hero is never blank while the video loads.
     posterUrl: `${base}/so_0,q_auto,f_auto/${publicId}.jpg`,
