@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { HeroMedia } from '@/lib/cloudinary-url';
 
 // Split hero (design_system.md Section 7, adapted): a solid deep-green panel
@@ -10,11 +10,12 @@ import type { HeroMedia } from '@/lib/cloudinary-url';
 // split. On mobile the two stack (panel on top, 16:9 video below) and never
 // overlap, which fixes the old text/menu collision.
 export function Hero({ media }: { media: HeroMedia }) {
-  // Default to the VIDEO so the real <video> element is in the server-rendered
-  // output (and plays as soon as the page hydrates on capable devices). We only
-  // DOWNGRADE to the poster still for reduced-motion, small screens, or slow
-  // connections — the cases where a heavy autoplaying video hurts more than it
-  // helps (design_system.md Section 6 & 7).
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Attempt the video on ALL devices, mobile included. The poster is the SAFETY
+  // NET — shown only when there is no media, prefers-reduced-motion is set, or a
+  // browser rejects muted autoplay (the play().catch below). It is NOT a blanket
+  // mobile block.
   const [showVideo, setShowVideo] = useState(true);
 
   useEffect(() => {
@@ -23,24 +24,30 @@ export function Hero({ media }: { media: HeroMedia }) {
       return;
     }
 
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
-    const smallScreen = window.matchMedia('(max-width: 767px)').matches;
-
-    const conn = (
-      navigator as Navigator & {
-        connection?: { saveData?: boolean; effectiveType?: string };
-      }
-    ).connection;
-    const slowConnection = Boolean(
-      conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType ?? '')),
-    );
-
-    // Reduced motion / mobile / data-saver → show the poster still instead.
-    if (reducedMotion || smallScreen || slowConnection) {
+    // Reduced motion → poster still, no autoplay.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setShowVideo(false);
+      return;
     }
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    // muted MUST be set as a PROPERTY (not merely the attribute) or mobile
+    // browsers block inline autoplay.
+    video.muted = true;
+
+    // Try to autoplay; if the browser still refuses, drop to the poster rather
+    // than leaving a blank/frozen area.
+    const attempt = video.play();
+    if (attempt && typeof attempt.catch === 'function') {
+      attempt.catch(() => setShowVideo(false));
+    }
+
+    // TODO(data-saver): a considerate enhancement could autoplay on wifi and
+    // show the poster on metered/cellular connections via the Network
+    // Information API / Save-Data hint (navigator.connection.saveData /
+    // effectiveType). Not built now.
   }, [media.hasMedia]);
 
   return (
@@ -85,11 +92,13 @@ export function Hero({ media }: { media: HeroMedia }) {
         <div className="relative aspect-video bg-green-ink md:aspect-auto">
           {media.hasMedia &&
             (showVideo ? (
-              // A real <video> (NOT the poster still). The .mp4 source is the
-              // Cloudinary VIDEO delivery URL; poster= the so_0 .jpg still shows
-              // instantly while it loads and stays put if autoplay is blocked,
-              // so the hero is never blank.
+              // A real <video> (NOT the poster still). Attempts muted inline
+              // autoplay on every device; poster= the so_0 .jpg shows instantly
+              // while it loads and stays put if autoplay is ever blocked, so the
+              // hero is never blank. The Cloudinary f_auto delivery serves a
+              // mobile-decodable format (mp4/H.264) via content negotiation.
               <video
+                ref={videoRef}
                 className="absolute inset-0 h-full w-full object-cover"
                 autoPlay
                 muted
@@ -101,7 +110,7 @@ export function Hero({ media }: { media: HeroMedia }) {
                 aria-hidden="true"
               />
             ) : (
-              // Poster fallback for reduced-motion / mobile / slow connections.
+              // Poster fallback: no media, reduced motion, or autoplay rejected.
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 className="absolute inset-0 h-full w-full object-cover"
