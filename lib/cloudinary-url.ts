@@ -10,6 +10,13 @@ export type HeroMedia = {
   posterUrl: string;
 };
 
+// Public image delivery URL (logos, etc.) — optimized format/quality. Only the
+// public cloud name + public ID appear; no secret involved.
+export function cloudinaryImage(cloudName: string, publicId: string): string {
+  if (!cloudName || !publicId) return '';
+  return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`;
+}
+
 export function heroMedia(cloudName: string, publicId: string): HeroMedia {
   if (!cloudName || !publicId) {
     return { hasMedia: false, videoUrl: '', posterUrl: '' };

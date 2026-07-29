@@ -1,6 +1,7 @@
 import { SiteNav } from '@/components/site-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { NavHeroProvider } from '@/components/nav-hero-context';
+import { cloudinaryImage } from '@/lib/cloudinary-url';
 
 // Shared public chrome (nav + footer). Every public page inherits this shell.
 // NavHeroProvider lets a page with a hero tell the nav to start transparent;
@@ -11,9 +12,16 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Logo URLs built server-side (cloud name stays off the client). logo2 is the
+  // solid-white mark for the dark/transparent state; logo1 is the green mark
+  // for the solid --paper state. Empty string → nav falls back to a wordmark.
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+  const logoLight = cloudinaryImage(cloud, 'modern/logo2');
+  const logoDark = cloudinaryImage(cloud, 'modern/logo1');
+
   return (
     <NavHeroProvider>
-      <SiteNav />
+      <SiteNav logoLight={logoLight} logoDark={logoDark} />
       <main className="flex-1">{children}</main>
       <SiteFooter />
     </NavHeroProvider>

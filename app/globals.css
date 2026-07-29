@@ -306,12 +306,8 @@
   .reveal-stagger[data-visible="true"] > *:nth-child(5) { transition-delay: 240ms; }
 }
 
-/* Top-of-page legibility gradient for the transparent nav when it sits over the
-   hero (Section 2 scrim spirit) — keeps light nav text readable over any media. */
-.nav-scrim {
-  background: linear-gradient(
-    to bottom,
-    rgba(14, 42, 28, 0.55) 0%,
-    rgba(14, 42, 28, 0) 100%
-  );
+/* Subtle text shadow so white nav text stays legible over the hero video half
+   WITHOUT painting a bar over the top (the nav itself is truly transparent). */
+.nav-legible {
+  text-shadow: 0 1px 12px rgba(14, 42, 28, 0.55);
 }

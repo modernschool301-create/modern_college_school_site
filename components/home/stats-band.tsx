@@ -13,7 +13,7 @@ const STATS = [
 
 export function StatsBand() {
   return (
-    <Band tone="mist">
+    <Band tone="paper">
       <Reveal
         stagger
         as="dl"

@@ -19,7 +19,7 @@ const SECONDARY = [
 
 export function NewsTeaser() {
   return (
-    <Band tone="paper">
+    <Band tone="mist">
       <Reveal className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-eyebrow uppercase tracking-wide text-green-brand">
@@ -41,7 +41,7 @@ export function NewsTeaser() {
         {/* Lead item */}
         <Link
           href="/news"
-          className="group flex flex-col justify-end overflow-hidden rounded-md border border-line bg-green-mist p-8 transition-transform duration-200 hover:-translate-y-0.5"
+          className="group flex flex-col justify-end overflow-hidden rounded-md border border-line bg-surface p-8 transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
         >
           <span className="badge badge-neutral w-fit uppercase">{LEAD.kind}</span>
           <h3 className="mt-3 font-display text-h3 text-green-ink">
