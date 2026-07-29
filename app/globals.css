@@ -337,3 +337,53 @@
   background: var(--nav-scrim);
   pointer-events: none;
 }
+
+/* Rendered Markdown (post bodies). Preflight strips list/heading styling, so it
+   is restored here within the article container. Reusable by any rich-text
+   content module. */
+.rich-text {
+  color: var(--ink);
+  line-height: 1.75;
+}
+.rich-text > * + * {
+  margin-top: 1em;
+}
+.rich-text h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  margin-top: 1.4em;
+}
+.rich-text h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  margin-top: 1.2em;
+}
+.rich-text a {
+  color: var(--green-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rich-text ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+.rich-text ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.rich-text li + li {
+  margin-top: 0.25em;
+}
+.rich-text strong {
+  font-weight: 600;
+  color: var(--green-ink);
+}
+.rich-text blockquote {
+  border-left: 3px solid var(--green-pale);
+  padding-left: 1em;
+  color: var(--ink-muted);
+}
+.rich-text img {
+  border-radius: var(--radius-md);
+  max-width: 100%;
+}

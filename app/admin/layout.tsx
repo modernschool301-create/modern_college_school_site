@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { signOut } from './actions';
+import { AdminSidebar } from '@/components/admin/admin-sidebar';
 
 // Layer 2 of the enforcement model (PRD 3, 9.2). Middleware has already
 // confirmed a SESSION exists; it does NOT check role. This layout runs on
@@ -62,7 +63,13 @@ export default async function AdminLayout({
           </form>
         </div>
       </header>
-      {children}
+
+      <div className="md:flex">
+        <aside className="border-b border-line md:w-56 md:shrink-0 md:border-b-0 md:border-r">
+          <AdminSidebar />
+        </aside>
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
     </div>
   );
 }
