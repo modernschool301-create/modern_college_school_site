@@ -4,6 +4,13 @@
 // the (non-public) CLOUDINARY_CLOUD_NAME env is read on the server; the
 // resulting URL is safe to ship to the browser.
 
+// The shared stand-in cover for entries with no image of their own. Lives here,
+// not in a component, so every caller resolves the same asset — and a future
+// re-upload is a one-line change. Callers pass it through their OWN aspect
+// transform (ContentCard 4:3, the homepage teaser lead 16:9), so the filler
+// always matches the shape of the slot it fills.
+export const FILLER_IMAGE = 'modern/filler';
+
 export type HeroMedia = {
   hasMedia: boolean;
   videoUrl: string;

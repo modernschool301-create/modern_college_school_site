@@ -384,6 +384,15 @@
   font-family: var(--font-display);
   font-size: var(--text-h3);
 }
+/* This panel replaces the title slot, so it carries the card's <h2> (heading
+   outline, §11). The panel owns the typography, so the heading inherits it
+   instead of taking the global h1–h6 treatment — visually unchanged from the
+   <span> it replaced. */
+.content-card__cover h2 {
+  font-weight: inherit;
+  line-height: inherit;
+  text-wrap: inherit;
+}
 
 /* Content slots share a uniform 24px rhythm: each populated slot carries a
    top+inline padding of space-6 and no bottom padding, so consecutive slots sit

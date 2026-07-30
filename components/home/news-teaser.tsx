@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
 import { createClient } from '@/lib/supabase/server';
-import { cloudinaryImage } from '@/lib/cloudinary-url';
+import { cloudinaryImage, FILLER_IMAGE } from '@/lib/cloudinary-url';
 import { POST_TYPE_LABELS, type PostType } from '@/lib/news';
 import { NPT_DATE } from '@/lib/dates';
 
@@ -35,9 +35,14 @@ export async function NewsTeaser() {
   if (posts.length === 0) return null;
 
   const [lead, ...secondary] = posts;
-  const leadCover = lead.cover_image
-    ? cloudinaryImage(cloud, lead.cover_image, 'c_fill,ar_16:9,w_800')
-    : '';
+  // A lead with no cover falls back to the shared filler rather than a flat
+  // colour block. Note the 16:9 here, not ContentCard's 4:3 — this lead is a
+  // wide editorial slot, and the filler takes the shape of the slot it fills.
+  const leadCover = cloudinaryImage(
+    cloud,
+    lead.cover_image ?? FILLER_IMAGE,
+    'c_fill,ar_16:9,w_800',
+  );
 
   return (
     <Band tone="mist">
@@ -65,10 +70,25 @@ export async function NewsTeaser() {
           className="group flex flex-col overflow-hidden rounded-md border border-line bg-surface transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
         >
           {leadCover ? (
+            // Decorative (alt=""): the card's own heading is the accessible
+            // name, and for a filler lead there is nothing to describe.
+            // max-h caps the DISPLAY height only — the fetched crop is still
+            // 16:9. Past ~570px of column the 16:9 box would exceed 320px, so
+            // object-cover trims the overflow instead of driving the whole card
+            // taller and dwarfing the secondary column. Below that width the
+            // cap is inert and the image is a plain uncropped 16:9.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={leadCover} alt="" className="aspect-video w-full object-cover" />
+            <img
+              src={leadCover}
+              alt=""
+              className="aspect-video max-h-[320px] w-full object-cover"
+            />
           ) : (
-            <div className="aspect-video w-full bg-green-pale" />
+            // Only reachable if CLOUDINARY_CLOUD_NAME is unset, which makes
+            // every delivery URL empty — a missing cover now yields the filler,
+            // not this block. Kept so a misconfigured env degrades to a plain
+            // panel instead of a broken <img>.
+            <div className="aspect-video max-h-[320px] w-full bg-green-pale" />
           )}
           <div className="flex flex-1 flex-col justify-end p-8">
             <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
@@ -88,28 +108,74 @@ export async function NewsTeaser() {
           </div>
         </Link>
 
-        {/* Secondary items */}
+        {/* Secondary items — dense horizontal list items: thumbnail left, meta
+            and title right, no excerpt. The column still stretches beside the
+            lead, but the items themselves carry no flex-grow, so each sizes to
+            its own content and the column simply ends short of the lead rather
+            than inflating two cards into tall empty panels. */}
         {secondary.length > 0 && (
           <div className="flex flex-col gap-6">
-            {secondary.map((post) => (
-              <Link
-                key={post.slug}
-                href={`/news/${post.slug}`}
-                className="flex flex-1 flex-col justify-center rounded-md border border-line bg-surface p-6 transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
-              >
-                <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-                  <span className="badge badge-neutral uppercase">
-                    {POST_TYPE_LABELS[post.type]}
-                  </span>
-                  {post.published_at && (
-                    <span>{NPT_DATE.format(new Date(post.published_at))}</span>
+            {secondary.map((post) => {
+              // Same filler fallback as the lead, at the thumbnail's own crop:
+              // 4:3 like ContentCard, at 400w for a ≤180px box on 2× screens.
+              const thumb = cloudinaryImage(
+                cloud,
+                post.cover_image ?? FILLER_IMAGE,
+                'c_fill,ar_4:3,w_400',
+              );
+              return (
+                <Link
+                  key={post.slug}
+                  href={`/news/${post.slug}`}
+                  className="flex items-stretch overflow-hidden rounded-md border border-line bg-surface transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
+                >
+                  {/* Full-bleed on the left: self-stretch + object-cover makes
+                      the thumbnail take the item's height whatever the title
+                      wraps to, so there is never a gap under it. 180px is the
+                      target, but at 375px that would leave the title a ~125px
+                      measure, so it steps 112px → 180px at sm where the row has
+                      the room — the image shrinks rather than the text wrapping
+                      beneath it. shrink-0 stops it collapsing further. */}
+                  {thumb ? (
+                    // Decorative (alt=""): the title is the link's accessible
+                    // name, and a filler thumbnail has nothing to describe.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumb}
+                      alt=""
+                      loading="lazy"
+                      className="w-28 shrink-0 self-stretch object-cover sm:w-[180px]"
+                    />
+                  ) : (
+                    // Unset CLOUDINARY_CLOUD_NAME only — see the lead above.
+                    <div className="w-28 shrink-0 self-stretch bg-green-pale sm:w-[180px]" />
                   )}
-                </div>
-                <h3 className="mt-2 font-display text-h3 text-green-ink">
-                  {post.title}
-                </h3>
-              </Link>
-            ))}
+                  {/* min-w-0 lets the text block shrink inside the flex row so
+                      a long title wraps instead of forcing overflow. */}
+                  <div className="min-w-0 p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                      <span className="badge badge-neutral uppercase">
+                        {POST_TYPE_LABELS[post.type]}
+                      </span>
+                      {post.published_at && (
+                        <span>{NPT_DATE.format(new Date(post.published_at))}</span>
+                      )}
+                    </div>
+                    <h3 className="mt-2 font-display text-h3 text-green-ink">
+                      {post.title}
+                    </h3>
+                    {/* One clamped line — enough to give the item substance
+                        without turning it into a second lead. line-clamp needs
+                        a min-w-0 parent (above) or the ellipsis never triggers. */}
+                    {post.excerpt && (
+                      <p className="mt-1 line-clamp-1 text-small text-ink-muted">
+                        {post.excerpt}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
