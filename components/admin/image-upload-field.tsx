@@ -73,8 +73,12 @@ export function ImageUploadField({
       }
       form.append('signature', signed.signature);
 
+      // resource_type is a URL path segment, not a signed param — but the SERVER
+      // still chooses it per purpose (PRD 10.3), so it comes from the sign
+      // response rather than being hardcoded here. Every image purpose sends
+      // 'image', so this is the same URL it has always posted to.
       const upRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${signed.cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`,
         { method: 'POST', body: form },
       );
       if (!upRes.ok) throw new Error('upload');

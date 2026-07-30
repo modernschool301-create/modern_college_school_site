@@ -31,6 +31,20 @@ export function cloudinaryImage(
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms}/${publicId}`;
 }
 
+// Public delivery URL for a RAW asset (Downloads, PRD 23). Deliberately carries
+// NO transformation: raw assets are stored byte-for-byte and cannot be
+// transformed, so there is no f_auto/q_auto to apply — adding a transformation
+// segment to a raw URL does not produce a derived file, it produces a 404.
+//
+// The public ID of a raw asset INCLUDES its file extension (Cloudinary appends
+// it for raw uploads, and raw delivery URLs have no extension of their own), so
+// it is used verbatim. Browsers download rather than render a raw delivery by
+// default, which is the behaviour a downloads list wants.
+export function cloudinaryRawUrl(cloudName: string, publicId: string): string {
+  if (!cloudName || !publicId) return '';
+  return `https://res.cloudinary.com/${cloudName}/raw/upload/${publicId}`;
+}
+
 export function heroMedia(cloudName: string, publicId: string): HeroMedia {
   if (!cloudName || !publicId) {
     return { hasMedia: false, videoUrl: '', posterUrl: '' };

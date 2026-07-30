@@ -12,11 +12,27 @@ import crypto from 'node:crypto';
 export type UploadPurpose =
   | 'news-image'
   | 'achievement-image'
-  | 'testimonial-photo';
+  | 'testimonial-photo'
+  | 'download-file';
+
+// Cloudinary's storage class for the asset. It is NOT a signed parameter — it
+// is a segment of the upload URL path (`/v1_1/<cloud>/<resource_type>/upload`),
+// and the signing docs list `resource_type` among the four params that are never
+// part of the string to sign (with `file`, `cloud_name`, `api_key`). It is
+// nonetheless decided HERE, per purpose, and handed to the browser in the signed
+// response — PRD 10.3: "the browser never names the folder, filename, or
+// delivery type."
+//
+//   'image' — Cloudinary's default class. Images AND PDFs; the asset is format-
+//             detected and may be transformed/normalised at ingest.
+//   'raw'   — stored as-is, byte-for-byte, no format detection and no
+//             transformations available. The only correct class for documents.
+type ResourceType = 'image' | 'raw';
 
 type PurposeConfig = {
   folder: string;
   requiresAdmin: boolean;
+  resourceType: ResourceType;
   // The incoming transformation applied at INGEST, as a signed param. `null`
   // means NO transformation is sent at all (correct for raw/PDF purposes, where
   // an image transform is meaningless or would corrupt a byte-exact document) —
@@ -44,17 +60,37 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   'news-image': {
     folder: 'modern/news',
     requiresAdmin: true,
+    resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
   },
   'achievement-image': {
     folder: 'modern/achievements',
     requiresAdmin: true,
+    resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
   },
   'testimonial-photo': {
     folder: 'modern/testimonials',
     requiresAdmin: true,
+    resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // The first RAW purpose, and the first with no ingest transformation. A
+  // results or routine PDF must come back out byte-identical, so: 'raw' (no
+  // format detection, no derived versions) and `ingestTransformation: null` (no
+  // c_limit/f_auto — meaningless on a document and rejected on a raw upload).
+  //
+  // NOT 'auto': Cloudinary's auto-detection classifies a PDF as 'image', which
+  // is exactly the processing this purpose exists to avoid. Everything posted
+  // here is raw — including the JPEG/PNG the field also accepts (PRD 10.3),
+  // because a download is an attachment to be handed over unchanged, not a
+  // picture to be rendered. Resource type is a property of the PURPOSE, never of
+  // the file the browser happened to pick.
+  'download-file': {
+    folder: 'modern/downloads',
+    requiresAdmin: true,
+    resourceType: 'raw',
+    ingestTransformation: null,
   },
 };
 
@@ -63,6 +99,9 @@ export type SignedUpload = {
   apiKey: string;
   timestamp: number;
   folder: string;
+  // The upload URL path segment the browser must post to. Unsigned by
+  // Cloudinary's rules, but chosen by the server, not the browser.
+  resourceType: ResourceType;
   // Present only when the purpose carries an ingest transformation. When the
   // purpose's transformation is null this key is OMITTED entirely (never sent as
   // an empty string) so the signed string and the posted params match exactly.
@@ -71,7 +110,10 @@ export type SignedUpload = {
 };
 
 export function signUpload(
-  config: Pick<PurposeConfig, 'folder' | 'ingestTransformation'>,
+  config: Pick<
+    PurposeConfig,
+    'folder' | 'ingestTransformation' | 'resourceType'
+  >,
 ): SignedUpload | null {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -79,7 +121,7 @@ export function signUpload(
   if (!cloudName || !apiKey || !apiSecret) return null;
 
   const timestamp = Math.floor(Date.now() / 1000);
-  const { folder, ingestTransformation } = config;
+  const { folder, ingestTransformation, resourceType } = config;
 
   // Cloudinary's signing rule (docs: "Authentication signatures" → generating an
   // upload signature): take EVERY parameter you send in the upload POST except
@@ -108,6 +150,7 @@ export function signUpload(
     apiKey,
     timestamp,
     folder,
+    resourceType,
     signature,
   };
   if (ingestTransformation !== null) {
