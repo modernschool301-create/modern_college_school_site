@@ -40,9 +40,3 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
-
-// Display dates in Nepal Standard Time (UTC+05:45), per CLAUDE.md.
-export const NPT_DATE = new Intl.DateTimeFormat('en-GB', {
-  dateStyle: 'medium',
-  timeZone: 'Asia/Kathmandu',
-});

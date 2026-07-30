@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Modules per PRD 27. News is live; the rest are existing stubs.
+// Modules per PRD 27. News and Achievements are live; the rest are existing stubs.
 const MODULES = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/news', label: 'News' },

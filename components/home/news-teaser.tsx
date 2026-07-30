@@ -3,7 +3,8 @@ import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
 import { createClient } from '@/lib/supabase/server';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
-import { POST_TYPE_LABELS, NPT_DATE, type PostType } from '@/lib/news';
+import { POST_TYPE_LABELS, type PostType } from '@/lib/news';
+import { NPT_DATE } from '@/lib/dates';
 
 type TeaserPost = {
   title: string;

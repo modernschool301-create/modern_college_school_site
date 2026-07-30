@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getActiveAdminContext } from '@/lib/auth-guard';
 import {
   UPLOAD_PURPOSES,
   signUpload,
@@ -27,18 +27,15 @@ export async function POST(request: Request) {
 
   // Public-content purposes require an active admin session. (The future
   // anonymous admission-document purpose will branch here with rate limiting.)
+  // A route handler must answer with JSON, so this uses the non-redirecting
+  // probe and keeps the 401 (no session) vs 403 (session, not an active admin)
+  // distinction.
   if (config.requiresAdmin) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { user, isAdmin } = await getActiveAdminContext();
     if (!user) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
     }
-    const { data: isActiveAdmin } = await supabase.rpc(
-      'current_user_is_active_admin',
-    );
-    if (!isActiveAdmin) {
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
     }
   }

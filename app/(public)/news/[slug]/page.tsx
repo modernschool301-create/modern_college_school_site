@@ -6,7 +6,8 @@ import remarkGfm from 'remark-gfm';
 import { createClient } from '@/lib/supabase/server';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
 import { Band } from '@/components/band';
-import { NPT_DATE, POST_TYPE_LABELS, type PostType } from '@/lib/news';
+import { POST_TYPE_LABELS, type PostType } from '@/lib/news';
+import { NPT_DATE } from '@/lib/dates';
 
 type DetailPost = {
   title: string;

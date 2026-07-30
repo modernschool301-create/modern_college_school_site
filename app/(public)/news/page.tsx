@@ -6,10 +6,10 @@ import { Band } from '@/components/band';
 import {
   POST_TYPES,
   POST_TYPE_LABELS,
-  NPT_DATE,
   type NewsCategory,
   type PostType,
 } from '@/lib/news';
+import { NPT_DATE } from '@/lib/dates';
 
 export const metadata: Metadata = {
   title: 'News & Events',

@@ -3,8 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { requireActiveAdmin } from '@/lib/auth-guard';
 import { POST_TYPES, slugify, type PostType } from '@/lib/news';
+
+// Generic message for DB failures. Raw Postgres text (e.g. "violates row-level
+// security policy") is logged server-side, never surfaced to the browser.
+const SAVE_FAILED = 'Something went wrong saving this post. Please try again.';
 
 export type PostFormState = { error: string | null };
 
@@ -83,11 +87,7 @@ export async function createPost(
   _prev: PostFormState,
   formData: FormData,
 ): Promise<PostFormState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const { supabase, user } = await requireActiveAdmin();
 
   const parsed = readPostForm(formData);
   if ('error' in parsed) return { error: parsed.error };
@@ -106,7 +106,10 @@ export async function createPost(
     published_at: f.is_published ? new Date().toISOString() : null,
     created_by: user.id,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('[news] createPost failed', error);
+    return { error: SAVE_FAILED };
+  }
 
   revalidatePublic(slug);
   redirect('/admin/news');
@@ -117,11 +120,7 @@ export async function updatePost(
   _prev: PostFormState,
   formData: FormData,
 ): Promise<PostFormState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const { supabase } = await requireActiveAdmin();
 
   const parsed = readPostForm(formData);
   if ('error' in parsed) return { error: parsed.error };
@@ -153,7 +152,10 @@ export async function updatePost(
       published_at,
     })
     .eq('id', postId);
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('[news] updatePost failed', error);
+    return { error: SAVE_FAILED };
+  }
 
   revalidatePublic(slug);
   if (existing?.slug && existing.slug !== slug) revalidatePublic(existing.slug);
@@ -161,11 +163,12 @@ export async function updatePost(
 }
 
 export async function togglePublish(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const id = String(formData.get('id') ?? '');
   const publish = String(formData.get('publish') ?? '') === 'true';
   if (!id) return;
 
-  const supabase = await createClient();
   const { data: existing } = await supabase
     .from('posts')
     .select('published_at, slug')
@@ -187,10 +190,11 @@ export async function togglePublish(formData: FormData): Promise<void> {
 }
 
 export async function deletePost(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const id = String(formData.get('id') ?? '');
   if (!id) return;
 
-  const supabase = await createClient();
   const { data: existing } = await supabase
     .from('posts')
     .select('slug')
@@ -207,10 +211,11 @@ export async function deletePost(formData: FormData): Promise<void> {
 // ---- Categories ------------------------------------------------------------
 
 export async function createCategory(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const name = String(formData.get('name') ?? '').trim();
   if (!name) return;
 
-  const supabase = await createClient();
   const { data: last } = await supabase
     .from('news_categories')
     .select('display_order')
@@ -224,33 +229,36 @@ export async function createCategory(formData: FormData): Promise<void> {
 }
 
 export async function renameCategory(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const id = String(formData.get('id') ?? '');
   const name = String(formData.get('name') ?? '').trim();
   if (!id || !name) return;
 
-  const supabase = await createClient();
   await supabase.from('news_categories').update({ name }).eq('id', id);
   revalidatePath('/admin/news');
   revalidatePath('/news');
 }
 
 export async function deleteCategory(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const id = String(formData.get('id') ?? '');
   if (!id) return;
 
   // posts.category_id is ON DELETE SET NULL, so posts survive un-categorised.
-  const supabase = await createClient();
   await supabase.from('news_categories').delete().eq('id', id);
   revalidatePath('/admin/news');
   revalidatePath('/news');
 }
 
 export async function moveCategory(formData: FormData): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
+
   const id = String(formData.get('id') ?? '');
   const direction = String(formData.get('direction') ?? '');
   if (!id || (direction !== 'up' && direction !== 'down')) return;
 
-  const supabase = await createClient();
   const { data: cats } = await supabase
     .from('news_categories')
     .select('id, display_order')

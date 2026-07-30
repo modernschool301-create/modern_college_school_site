@@ -2,12 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  POST_TYPES,
-  POST_TYPE_LABELS,
-  NPT_DATE,
-  type PostType,
-} from '@/lib/news';
+import { POST_TYPES, POST_TYPE_LABELS, type PostType } from '@/lib/news';
+import { NPT_DATE } from '@/lib/dates';
 import { togglePublish, deletePost } from '@/app/admin/news/actions';
 import { ConfirmSubmitButton } from '@/components/admin/confirm-submit-button';
 import { toCsv, downloadCsv } from '@/lib/csv';

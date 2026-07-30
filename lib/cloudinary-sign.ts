@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 // where/how the asset is stored) — the browser cannot influence it, because any
 // change to a signed param invalidates the signature.
 
-export type UploadPurpose = 'news-image';
+export type UploadPurpose = 'news-image' | 'achievement-image';
 
 type PurposeConfig = {
   folder: string;
@@ -19,6 +19,7 @@ type PurposeConfig = {
 // modules add a line here — the folder is fixed server-side per purpose.
 export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   'news-image': { folder: 'modern/news', requiresAdmin: true },
+  'achievement-image': { folder: 'modern/achievements', requiresAdmin: true },
 };
 
 export type SignedUpload = {
