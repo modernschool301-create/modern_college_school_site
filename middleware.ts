@@ -37,10 +37,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // TODO: role-based authorization. A valid session is enough to pass this gate,
-  // but /admin routes must additionally verify the user has an admin/staff role
-  // (e.g. look up a `profiles.role` or a custom claim) and redirect unauthorized
-  // users away. Implement once the roles model is defined.
+  // Role authorization is deliberately NOT done here. This middleware is
+  // session-only BY DESIGN (PRD 3): it answers "is there a valid session?" and
+  // nothing more. The admin/active check lives in the /admin layout, which reads
+  // the role LIVE from `profiles` via current_user_is_active_admin() on every
+  // request, so a demoted or deactivated admin loses access on their very next
+  // action. Middleware runs on the edge of the request with only cookie/JWT
+  // state to hand, so a role check here would either read a stale claim or add a
+  // database round-trip to every matched request — and RLS is the real gate
+  // regardless. Do not "fix" this by adding a role check here.
 
   return response;
 }

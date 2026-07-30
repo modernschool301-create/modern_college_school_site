@@ -2,17 +2,60 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavHero } from './nav-hero-context';
 
-const NAV_LINKS = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/programmes', label: 'Programmes' },
-  { href: '/admissions', label: 'Admissions' },
-  { href: '/news', label: 'News' },
-  { href: '/gallery', label: 'Gallery' },
-  { href: '/contact', label: 'Contact' },
+// The nav is a grouped structure: five top-level items, three of which open a
+// dropdown. Home is deliberately absent — the logo is the home affordance (in
+// the bar AND inside the mobile sheet).
+type NavChild = { href: string; label: string };
+type NavItem =
+  | { kind: 'link'; href: string; label: string }
+  | {
+      kind: 'group';
+      id: string;
+      label: string;
+      children: readonly NavChild[];
+      // Panels hang left-aligned under their trigger by default. The rightmost
+      // group aligns to its trigger's RIGHT edge instead, so a wide panel can
+      // never run off-screen at narrow desktop widths.
+      align?: 'end';
+    };
+
+const NAV_ITEMS: readonly NavItem[] = [
+  {
+    kind: 'group',
+    id: 'life',
+    label: 'Life at Modern',
+    children: [
+      { href: '/about', label: 'About us' },
+      { href: '/learning-process', label: 'Learning process' },
+      { href: '/achievements', label: 'Achievements' },
+      { href: '/students-voice', label: "Student's voice" },
+    ],
+  },
+  { kind: 'link', href: '/programmes', label: 'Programmes' },
+  {
+    kind: 'group',
+    id: 'admissions',
+    label: 'Admissions',
+    children: [
+      { href: '/admissions', label: 'Admission procedure' },
+      { href: '/scholarships', label: 'Scholarships' },
+    ],
+  },
+  {
+    kind: 'group',
+    id: 'news',
+    label: 'News & media',
+    align: 'end',
+    children: [
+      { href: '/news', label: 'News & notices' },
+      { href: '/gallery', label: 'Gallery' },
+      { href: '/downloads', label: 'Downloads' },
+    ],
+  },
+  { kind: 'link', href: '/contact', label: 'Contact' },
 ] as const;
 
 const APPLY_HREF = '/admissions';
@@ -20,6 +63,30 @@ const LOGO_ALT = 'Modern College & School';
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href);
+}
+
+// Chevron for the dropdown triggers. Rotates when open; under
+// prefers-reduced-motion it snaps instead of animating (design_system.md §6).
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={[
+        'shrink-0 transition-transform duration-200 ease-[var(--ease-soft)] motion-reduce:transition-none',
+        open ? 'rotate-180' : '',
+      ].join(' ')}
+    >
+      <path d="M4 6.5 8 10.5l4-4" />
+    </svg>
+  );
 }
 
 export function SiteNav({
@@ -33,6 +100,10 @@ export function SiteNav({
   const { hasHero } = useNavHero();
   const [pastHero, setPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Which desktop dropdown is open (only ever one at a time), by group id.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const desktopNavRef = useRef<HTMLUListElement>(null);
+  const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Does THIS page own a hero the nav should sit over? `hasHero` (from context)
   // is the general signal, but it is only flipped on by HeroNavMode's post-mount
@@ -77,9 +148,10 @@ export function SiteNav({
     };
   }, [overHeroPage]);
 
-  // Close the mobile sheet whenever the route changes.
+  // Close the mobile sheet AND any open dropdown whenever the route changes.
   useEffect(() => {
     setMenuOpen(false);
+    setOpenGroup(null);
   }, [pathname]);
 
   // Lock body scroll + allow Escape to close while the sheet is open.
@@ -96,6 +168,38 @@ export function SiteNav({
       window.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
+
+  // Open dropdown: Escape closes it and returns focus to its trigger; a click
+  // anywhere outside the desktop nav closes it. Focus is NOT trapped — tabbing
+  // past the last panel link just leaves, and the group's onBlur closes up
+  // behind it (see below), so Tab keeps flowing through the bar.
+  useEffect(() => {
+    if (!openGroup) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      triggerRefs.current[openGroup]?.focus();
+      setOpenGroup(null);
+    };
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const nav = desktopNavRef.current;
+      if (nav && !nav.contains(e.target as Node)) setOpenGroup(null);
+    };
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('touchstart', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('touchstart', onPointerDown);
+    };
+  }, [openGroup]);
+
+  // Hover-open is a POINTER-ONLY enhancement layered on top of click — never a
+  // replacement, since hover excludes keyboard and touch entirely. Guarded on a
+  // real hover-capable pointer so a tap does not fire it.
+  const canHover = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   // Shared link sizing for BOTH states (over-hero and solid). Colour + shadow
   // differ per state; size/weight/hover/focus are consistent.
@@ -140,7 +244,7 @@ export function SiteNav({
             logoDark (green logo1) on the solid --paper bar and non-hero pages. */}
         <Link
           href="/"
-          className="flex items-center rounded-sm"
+          className="flex shrink-0 items-center rounded-sm"
           aria-label={LOGO_ALT}
         >
           {logoSrc ? (
@@ -163,40 +267,151 @@ export function SiteNav({
           )}
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-7 md:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                aria-current={isActive(pathname, link.href) ? 'page' : undefined}
-                style={{ fontSize: 'var(--nav-link-size)' }}
-                className={[
-                  linkBase,
-                  linkColor,
-                  isActive(pathname, link.href) && !transparent
-                    ? 'text-green-brand'
-                    : '',
-                ].join(' ')}
+        {/* Desktop links. Breakpoint is `xl` (1280px), NOT md — see the note at
+            the hamburger below. Column gap is fluid so the row tightens
+            gracefully at 1280 and relaxes on wide screens, without ever taking
+            the link type below the --nav-link-size scale. */}
+        <ul
+          ref={desktopNavRef}
+          className="hidden items-center xl:flex"
+          style={{ columnGap: 'clamp(0.75rem, 1.6vw, 1.75rem)' }}
+        >
+          {NAV_ITEMS.map((item) => {
+            if (item.kind === 'link') {
+              const active = isActive(pathname, item.href);
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    style={{ fontSize: 'var(--nav-link-size)' }}
+                    className={[
+                      linkBase,
+                      linkColor,
+                      active && !transparent ? 'text-green-brand' : '',
+                    ].join(' ')}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            }
+
+            const panelId = `nav-panel-${item.id}`;
+            const open = openGroup === item.id;
+            // The trigger wears the active-section style when the current page is
+            // ANY of its children.
+            const sectionActive = item.children.some((child) =>
+              isActive(pathname, child.href),
+            );
+
+            return (
+              <li
+                key={item.id}
+                className="relative"
+                onMouseEnter={() => {
+                  if (canHover()) setOpenGroup(item.id);
+                }}
+                onMouseLeave={() => {
+                  if (canHover()) setOpenGroup((cur) => (cur === item.id ? null : cur));
+                }}
+                // Tab (or Shift+Tab) out of the trigger or the panel closes the
+                // group behind the moving focus — no trap, focus just continues
+                // to the next nav item. relatedTarget === null means focus left
+                // for something unfocusable (a bare click); the pointerdown
+                // handler owns that case.
+                onBlur={(e) => {
+                  if (!e.relatedTarget) return;
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  setOpenGroup((cur) => (cur === item.id ? null : cur));
+                }}
               >
-                {link.label}
-              </Link>
-            </li>
-          ))}
+                <button
+                  type="button"
+                  ref={(el) => {
+                    triggerRefs.current[item.id] = el;
+                  }}
+                  // A real <button>, so Enter and Space toggle natively.
+                  onClick={() => setOpenGroup(open ? null : item.id)}
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  aria-haspopup="true"
+                  style={{ fontSize: 'var(--nav-link-size)' }}
+                  className={[
+                    linkBase,
+                    linkColor,
+                    'inline-flex items-center gap-1.5 whitespace-nowrap',
+                    sectionActive && !transparent ? 'text-green-brand' : '',
+                  ].join(' ')}
+                >
+                  {item.label}
+                  <Chevron open={open} />
+                </button>
+
+                {/* The panel is its OWN visual layer: always solid --surface with
+                    a --line hairline, so it reads identically whether the bar
+                    behind it is transparent-over-hero or solid --paper. It is
+                    never styled off the nav's `transparent` state. */}
+                {open && (
+                  // The outer element positions and carries the 8px offset as
+                  // PADDING, not a margin: the gap between trigger and card then
+                  // sits INSIDE the group's hover region, so travelling from the
+                  // trigger down to the panel with the mouse can't fire the li's
+                  // mouseleave and snap it shut halfway.
+                  <div
+                    id={panelId}
+                    className={[
+                      'absolute top-full z-10 pt-2',
+                      item.align === 'end' ? 'right-0' : 'left-0',
+                    ].join(' ')}
+                  >
+                    <ul className="flex min-w-56 flex-col rounded-md border border-line bg-surface p-2 shadow-lg">
+                      {item.children.map((child) => {
+                        const active = isActive(pathname, child.href);
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              aria-current={active ? 'page' : undefined}
+                              onClick={() => setOpenGroup(null)}
+                              className={[
+                                'block whitespace-nowrap rounded-sm px-3 py-2 text-small transition-colors hover:bg-green-mist',
+                                active
+                                  ? 'font-medium text-green-brand'
+                                  : 'text-ink',
+                              ].join(' ')}
+                            >
+                              {child.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {/* Persistent, always-reachable primary CTA (desktop). Keeps the
               rationed --green-signature; global :focus-visible gives it a ring. */}
           <Link
             href={APPLY_HREF}
             style={{ fontSize: 'var(--nav-link-size)' }}
-            className="btn-primary hidden px-6 py-2.5 font-medium md:inline-flex"
+            className="btn-primary hidden whitespace-nowrap px-6 py-2.5 font-medium xl:inline-flex"
           >
             Apply now
           </Link>
 
-          {/* Hamburger (mobile only) */}
+          {/* Hamburger. Shown until `xl` (1280px), not `md`: the grouped labels
+              ("Life at Modern", "News & media") are far wider than the old flat
+              ones, and five triggers + the ~200px wordmark + the Apply button
+              need ~1000px of content width — more than 1024px minus the
+              container's own 5vw side padding leaves. Raising the breakpoint is
+              the fix the design system allows; shrinking the link type below
+              --nav-link-size is not. */}
           <button
             type="button"
             aria-label="Open menu"
@@ -204,7 +419,7 @@ export function SiteNav({
             aria-controls="mobile-nav"
             onClick={() => setMenuOpen(true)}
             className={[
-              'inline-flex h-10 w-10 items-center justify-center rounded-sm md:hidden',
+              'inline-flex h-10 w-10 items-center justify-center rounded-sm xl:hidden',
               transparent ? 'text-white nav-legible' : 'text-green-ink',
             ].join(' ')}
           >
@@ -216,32 +431,42 @@ export function SiteNav({
       </nav>
 
       {/* Mobile full-screen sheet — SOLID deep green, fully opaque, covers the
-          page entirely (never lets the hero bleed through). */}
+          page entirely (never lets the hero bleed through). NO nested dropdowns
+          in here: each group is a flat labelled section. */}
       {menuOpen && (
         <div
           id="mobile-nav"
           role="dialog"
           aria-modal="true"
           aria-label="Site menu"
-          className="fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-green-forest text-green-pale md:hidden"
+          className="fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-green-forest text-green-pale xl:hidden"
         >
           <div
             className="container-page flex shrink-0 items-center justify-between"
             style={{ height: 'var(--nav-height)' }}
           >
-            {logoLight ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logoLight}
-                alt={LOGO_ALT}
-                className="w-auto"
-                style={{ height: 'var(--nav-logo-height)' }}
-              />
-            ) : (
-              <span className="font-display text-lg font-semibold text-white">
-                Modern College &amp; School
-              </span>
-            )}
+            {/* With Home gone from the links, the logo is the ONLY way home —
+                so it must be one in here too, not a bare image. */}
+            <Link
+              href="/"
+              aria-label={LOGO_ALT}
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center rounded-sm"
+            >
+              {logoLight ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoLight}
+                  alt={LOGO_ALT}
+                  className="w-auto"
+                  style={{ height: 'var(--nav-logo-height)' }}
+                />
+              ) : (
+                <span className="font-display text-lg font-semibold text-white">
+                  Modern College &amp; School
+                </span>
+              )}
+            </Link>
             <button
               type="button"
               aria-label="Close menu"
@@ -255,24 +480,63 @@ export function SiteNav({
             </button>
           </div>
 
-          <div className="container-page flex flex-1 flex-col gap-1 overflow-y-auto pt-4">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive(pathname, link.href) ? 'page' : undefined}
-                className={[
-                  'rounded-sm px-2 py-3 font-display text-2xl font-medium',
-                  isActive(pathname, link.href) ? 'text-white' : 'text-green-pale',
-                ].join(' ')}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="container-page flex flex-1 flex-col gap-1 overflow-y-auto pb-8 pt-4">
+            {NAV_ITEMS.map((item) => {
+              if (item.kind === 'link') {
+                const active = isActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={[
+                      'rounded-sm px-2 py-3 font-display text-2xl font-medium',
+                      active ? 'text-white' : 'text-green-pale',
+                    ].join(' ')}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+
+              const headingId = `mobile-group-${item.id}`;
+              return (
+                <section
+                  key={item.id}
+                  aria-labelledby={headingId}
+                  className="mt-4 first:mt-0"
+                >
+                  <h2
+                    id={headingId}
+                    className="px-2 pb-1 font-body text-eyebrow font-medium text-green-pale/60"
+                  >
+                    {item.label}
+                  </h2>
+                  <div className="flex flex-col">
+                    {item.children.map((child) => {
+                      const active = isActive(pathname, child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          aria-current={active ? 'page' : undefined}
+                          className={[
+                            'rounded-sm px-2 py-3 font-display text-2xl font-medium',
+                            active ? 'text-white' : 'text-green-pale',
+                          ].join(' ')}
+                        >
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
 
             <Link
               href={APPLY_HREF}
-              className="btn-primary mt-4 w-full px-5 py-3 text-base"
+              className="btn-primary mt-6 w-full px-5 py-3 text-base"
             >
               Apply now
             </Link>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
 import type { UploadPurpose } from '@/lib/cloudinary-sign';
 
@@ -27,6 +27,8 @@ export function ImageUploadField({
   const [publicId, setPublicId] = useState(initialPublicId);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -54,12 +56,17 @@ export function ImageUploadField({
       if (!signRes.ok) throw new Error('sign');
       const signed = await signRes.json();
 
-      // 2. Upload straight to Cloudinary with the signed params.
+      // 2. Upload straight to Cloudinary with the signed params. Every signed
+      //    param must be echoed EXACTLY as the server hashed it — including
+      //    `transformation`, the server-set ingest size cap, which is sent
+      //    verbatim from the sign response (never re-typed here) so the string
+      //    the browser posts and the string that was signed cannot drift apart.
       const form = new FormData();
       form.append('file', file);
       form.append('api_key', signed.apiKey);
       form.append('timestamp', String(signed.timestamp));
       form.append('folder', signed.folder);
+      form.append('transformation', signed.transformation);
       form.append('signature', signed.signature);
 
       const upRes = await fetch(
@@ -81,6 +88,8 @@ export function ImageUploadField({
     ? cloudinaryImage(cloudName, publicId, 'c_fill,ar_16:9,w_640')
     : '';
 
+  const errorId = `${inputId}-error`;
+
   return (
     <div className="space-y-2">
       <span className="block text-sm font-medium">{label}</span>
@@ -97,15 +106,52 @@ export function ImageUploadField({
         />
       )}
 
-      <input
-        type="file"
-        accept={ACCEPTED.join(',')}
-        onChange={handleFile}
-        disabled={uploading}
-        className="block text-sm"
-      />
+      {/* The trigger. The native file input is VISUALLY hidden with the sr-only
+          clip technique — not display:none / visibility:hidden, which would drop
+          it out of the accessibility tree entirely — and the styled <label> is
+          the visible affordance. The label carries role="button" + tabIndex so it
+          is the single keyboard stop (the input is taken out of the tab order
+          with tabIndex={-1}), gets the global --green-signature :focus-visible
+          ring, and activates on Enter/Space. A utility action, so §8 Secondary
+          (--green-brand border + text), never the rationed --green-signature. */}
+      <div>
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept={ACCEPTED.join(',')}
+          onChange={handleFile}
+          disabled={uploading}
+          tabIndex={-1}
+          aria-describedby={error ? errorId : undefined}
+          className="sr-only"
+        />
+        <label
+          htmlFor={inputId}
+          role="button"
+          tabIndex={uploading ? -1 : 0}
+          aria-disabled={uploading || undefined}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault(); // Space must not scroll the form
+            if (!uploading) inputRef.current?.click();
+          }}
+          className={[
+            'btn-secondary px-4 py-2.5 text-sm',
+            uploading
+              ? 'pointer-events-none opacity-60'
+              : 'cursor-pointer',
+          ].join(' ')}
+        >
+          {publicId ? 'Replace image' : 'Choose image'}
+        </label>
+      </div>
 
-      {uploading && <p className="text-sm text-ink-muted">Uploading…</p>}
+      {uploading && (
+        <p aria-live="polite" className="text-sm text-ink-muted">
+          Uploading…
+        </p>
+      )}
       {publicId && !uploading && (
         <button
           type="button"
@@ -115,7 +161,11 @@ export function ImageUploadField({
           Remove image
         </button>
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p id={errorId} className="text-sm text-danger">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

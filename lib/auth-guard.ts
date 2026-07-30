@@ -29,7 +29,17 @@ export async function getActiveAdminContext(): Promise<{
 
   if (!user) return { supabase, user: null, isAdmin: false };
 
-  const { data } = await supabase.rpc('current_user_is_active_admin');
+  const { data, error } = await supabase.rpc('current_user_is_active_admin');
+
+  // A failed RPC and a legitimate `false` both arrive here as a falsy `data`, so
+  // without this they are indistinguishable in the logs. Observability only: the
+  // outcome is unchanged — an errored check still denies (fail closed).
+  if (error) {
+    console.error(
+      '[auth-guard] current_user_is_active_admin RPC failed:',
+      error.message,
+    );
+  }
 
   return { supabase, user, isAdmin: !!data };
 }
