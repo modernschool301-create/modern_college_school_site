@@ -1,11 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
-import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { ConfirmSubmitButton } from '@/components/admin/confirm-submit-button';
+import { PhotoBatchUpload } from '@/components/admin/gallery/photo-batch-upload';
 import {
-  addPhoto,
   updatePhotoCaption,
   deletePhoto,
   movePhoto,
@@ -21,61 +19,6 @@ const actionClass =
   'rounded-sm border border-line px-3 py-1 text-sm font-medium transition-colors hover:bg-green-mist';
 const inputClass = 'w-full px-3 py-2 text-sm';
 
-// ONE PHOTO AT A TIME (PRD 28) — a deliberate simplicity trade, not an
-// oversight. Multi-select upload is a pure frontend addition later; nothing in
-// the schema, the actions or the policies would need to change for it.
-function AddPhoto({
-  albumId,
-  photoCount,
-  cloudName,
-}: {
-  albumId: string;
-  photoCount: number;
-  cloudName: string;
-}) {
-  const action = addPhoto.bind(null, albumId);
-  const [state, formAction, pending] = useActionState(action, { error: null });
-
-  return (
-    <form action={formAction} className="space-y-4 rounded-md border border-line p-4">
-      {/* Keyed on the photo count so a successful add REMOUNTS the fields: the
-          uploader clears its stored public ID and the caption empties, ready for
-          the next one. The count changes because the server action revalidates
-          this route, so the parent re-renders with the new list. */}
-      <div key={photoCount} className="space-y-4">
-        <ImageUploadField
-          name="photo_file"
-          purpose="gallery-photo"
-          cloudName={cloudName}
-          label="Photograph"
-        />
-
-        <div className="space-y-1.5">
-          <label htmlFor="new-caption" className="block text-sm font-medium">
-            Caption <span className="text-ink-faint">(optional)</span>
-          </label>
-          <input
-            id="new-caption"
-            name="caption"
-            defaultValue=""
-            className={inputClass}
-          />
-        </div>
-      </div>
-
-      {state.error && (
-        <p role="alert" className="text-sm text-danger">
-          {state.error}
-        </p>
-      )}
-
-      <button type="submit" disabled={pending} className="btn-primary text-sm">
-        {pending ? 'Adding…' : 'Add photograph'}
-      </button>
-    </form>
-  );
-}
-
 export function AlbumPhotos({
   albumId,
   photos,
@@ -89,14 +32,13 @@ export function AlbumPhotos({
 
   return (
     <div className="space-y-8">
+      {/* Adding photographs is a permanent fixture of the edit screen, not an
+          album-creation step — staff come back to an existing album and add the
+          rest of the event later. New photographs land after the existing ones. */}
       <section>
-        <h2 className="font-display text-h3 text-green-ink">Add a photograph</h2>
+        <h2 className="font-display text-h3 text-green-ink">Add photographs</h2>
         <div className="mt-4">
-          <AddPhoto
-            albumId={albumId}
-            photoCount={photos.length}
-            cloudName={cloudName}
-          />
+          <PhotoBatchUpload albumId={albumId} />
         </div>
       </section>
 

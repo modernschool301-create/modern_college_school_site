@@ -7,7 +7,11 @@ import { requireActiveAdmin } from '@/lib/auth-guard';
 import { slugifyAlbum } from '@/lib/gallery';
 
 export type AlbumFormState = { error: string | null };
-export type PhotoFormState = { error: string | null };
+
+// addPhoto is called once per file by the admin batch uploader, so it reports
+// rather than throws: the loop needs to read a failure, record the reason, and
+// carry on to the next file.
+export type AddPhotoResult = { ok: true } | { ok: false; error: string };
 
 // Generic messages for DB failures. Raw Postgres text (e.g. "violates row-level
 // security policy") is logged server-side, never surfaced to the browser.
@@ -265,19 +269,24 @@ export async function moveAlbum(formData: FormData): Promise<void> {
 // Photos — always scoped to one album, managed from that album's edit screen
 // ---------------------------------------------------------------------------
 
+// ONE photograph per call. The admin uploader calls this once per file in a
+// sequential loop, which is what makes skip-and-report possible: a bulk insert
+// would take the whole batch down with the first rejected row, so a bad third
+// file would cost the other nineteen. Captions are not set here — they are
+// edited per-photo in the grid after the batch lands.
 export async function addPhoto(
   albumId: string,
-  _prev: PhotoFormState,
-  formData: FormData,
-): Promise<PhotoFormState> {
+  publicId: string,
+): Promise<AddPhotoResult> {
   const { supabase } = await requireActiveAdmin();
 
-  const photoFile = String(formData.get('photo_file') ?? '').trim();
-  if (!photoFile) return { error: 'Please upload a photograph first.' };
-  const caption = String(formData.get('caption') ?? '').trim();
+  const photoFile = publicId.trim();
+  if (!photoFile) return { ok: false, error: 'No uploaded image was supplied.' };
 
   // New photos land at the end of THIS album's order — the max is scoped to the
-  // album, not global, or every album after the first would start high.
+  // album, not global, or every album after the first would start high. Because
+  // the batch is sequential, each call sees the row the previous one inserted,
+  // so the album keeps the order the files were selected in.
   const { data: last } = await supabase
     .from('gallery_photos')
     .select('display_order')
@@ -289,17 +298,29 @@ export async function addPhoto(
   const { error } = await supabase.from('gallery_photos').insert({
     album_id: albumId,
     photo_file: photoFile,
-    caption: caption || null,
+    caption: null,
     display_order: nextOrder,
   });
   if (error) {
     console.error('[gallery] addPhoto failed', error);
-    return { error: PHOTO_FAILED };
+    return { ok: false, error: PHOTO_FAILED };
   }
+
+  // Deliberately NO revalidation here — see finishPhotoBatch below.
+  return { ok: true };
+}
+
+// Called ONCE when a batch of photographs finishes, instead of revalidating on
+// every addPhoto. A 30-photo album would otherwise pay 30 slug lookups and 90
+// path invalidations to publish one logical change; the intermediate states are
+// never observed by anyone, since the admin is still uploading and the public
+// pages only need to be right at the end. Runs even when some files were
+// skipped, because the ones that succeeded still need publishing.
+export async function finishPhotoBatch(albumId: string): Promise<void> {
+  const { supabase } = await requireActiveAdmin();
 
   revalidatePublic(await albumSlugById(supabase, albumId));
   revalidateAdmin(albumId);
-  return { error: null };
 }
 
 export async function updatePhotoCaption(formData: FormData): Promise<void> {
