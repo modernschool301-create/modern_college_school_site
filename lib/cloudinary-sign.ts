@@ -13,6 +13,7 @@ export type UploadPurpose =
   | 'news-image'
   | 'achievement-image'
   | 'testimonial-photo'
+  | 'gallery-photo'
   | 'download-file';
 
 // Cloudinary's storage class for the asset. It is NOT a signed parameter — it
@@ -71,6 +72,15 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   },
   'testimonial-photo': {
     folder: 'modern/testimonials',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Album covers AND album photographs share this one purpose: both are public
+  // gallery images living in the same folder, and the cover is simply one of the
+  // photographs promoted. A separate cover purpose would differ in nothing.
+  'gallery-photo': {
+    folder: 'modern/gallery',
     requiresAdmin: true,
     resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
