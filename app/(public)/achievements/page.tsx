@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
+import { CardGrid } from '@/components/card-grid';
+import { ContentCard } from '@/components/content-card';
 import { NPT_DATE } from '@/lib/dates';
 import type { Achievement } from '@/lib/achievements';
 
@@ -80,45 +82,41 @@ export default async function AchievementsPage() {
           </Link>
         </Reveal>
       ) : (
-        <Reveal stagger className="mt-12 grid-auto-fit">
-          {achievements.map((achievement) => {
-            const image = achievement.image
-              ? cloudinaryImage(cloud, achievement.image, 'c_fill,ar_4:3,w_800')
-              : '';
-            return (
-              <article
+        // A single Reveal fades the whole grid in; ContentCards must be direct
+        // grid children for subgrid, so per-card stagger is not used (see Part 1).
+        <Reveal className="mt-12">
+          <CardGrid variant="media">
+            {achievements.map((achievement) => (
+              <ContentCard
                 key={achievement.id}
-                className="flex flex-col overflow-hidden rounded-md border border-line bg-surface transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
-              >
-                {image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={image}
-                    alt={achievement.title}
-                    loading="lazy"
-                    className="aspect-[4/3] w-full object-cover"
-                  />
-                )}
-                <div className="flex flex-1 flex-col p-6">
-                  {achievement.achieved_on && (
+                // Null image → the no-image cover panel (green branded panel with
+                // the title), never an empty frame or a logo stand-in.
+                media={{
+                  cloudName: cloud,
+                  publicId: achievement.image,
+                  alt: achievement.title,
+                }}
+                meta={
+                  achievement.achieved_on ? (
                     <p className="text-xs text-ink-muted">
                       {NPT_DATE.format(new Date(achievement.achieved_on))}
                     </p>
-                  )}
-                  <h2 className="mt-2 font-display text-h3 text-green-ink">
-                    {achievement.title}
-                  </h2>
-                  {achievement.description && (
-                    <div className="rich-text mt-3 flex-1 text-small">
+                  ) : undefined
+                }
+                title={achievement.title}
+                // Description stays MARKDOWN (bold, lists, links) in .rich-text.
+                body={
+                  achievement.description ? (
+                    <div className="rich-text text-small">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {achievement.description}
                       </ReactMarkdown>
                     </div>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                  ) : undefined
+                }
+              />
+            ))}
+          </CardGrid>
         </Reveal>
       )}
     </Band>

@@ -277,9 +277,124 @@
   gap: var(--space-6);
 }
 
+/* ---- Shared card grids (components/card-grid.tsx) --------------------------
+   EXPLICIT column counts, not auto-fit: auto-fit's count depends on the
+   container width and silently changed with it (a 420px min produced three
+   columns on a ~1312px content box, not two). Stating the count per breakpoint
+   is predictable at every width. Both start single-column; no padding on the
+   grid itself — padding on a subgrid parent shifts the tracks the cards align
+   to. gap uses the space-6 token. */
+
+/* Text-heavy cards (quotes): one column, two from 880px up — a wide measure so
+   a quote never reads as a narrow ribbon. Never three. */
+@utility card-grid-text {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @media (min-width: 880px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Media cards (image + title + body): one column, two from 640px, three from
+   1024px up. Three (not four) keeps ~430px cards on a 1312px content box —
+   room for a title and a few lines of body. */
+@utility card-grid-media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* Cap running text to a readable ~75-character measure (Section 5). */
 @utility measure {
   max-width: 68ch;
+}
+
+/* ============================================================================
+   Shared content card (components/content-card.tsx). The card is itself a grid
+   that spans FIVE parent rows and adopts them as SUBGRID, so every card in a row
+   shares its five track heights — media, meta, title, body, and footer line up
+   across the row with no fixed heights and no JS (a short quote gets a
+   full-height card with its attribution level with a taller neighbour's).
+   Subgrid reached Baseline Widely Available in 2026-03; the @supports baseline
+   (body row = 1fr so the footer still sinks to the bottom) keeps older browsers
+   reasonable, just not perfectly aligned. Card §8: --surface, --radius-md, 1px
+   --line, hover lift toward --green-pale, motion-reduce safe.
+   ============================================================================ */
+.content-card {
+  grid-row: span 5;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto; /* baseline; body grows */
+  gap: 0; /* slots own their padding — no inherited row/col gaps inside */
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden; /* clip a flush media image to the top radius */
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-soft);
+}
+@supports (grid-template-rows: subgrid) {
+  .content-card {
+    grid-template-rows: subgrid;
+  }
+}
+.content-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--green-pale);
+}
+@media (prefers-reduced-motion: reduce) {
+  .content-card {
+    transition: none;
+  }
+  .content-card:hover {
+    transform: none;
+  }
+}
+
+/* Media slot. An image fills the top flush (no padding); overflow:hidden on the
+   card clips it to the radius. Empty/omitted media renders a zero-height
+   placeholder (kept as a child so every card has the same 5 children — required
+   for subgrid). */
+.content-card__media {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* No-image variant (§9 "green as frame, not filter"): a --green-forest cover
+   panel carrying the title in --paper, instead of an empty frame or a logo. */
+.content-card__cover {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-6);
+  background-color: var(--green-forest);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+}
+
+/* Content slots share a uniform 24px rhythm: each populated slot carries a
+   top+inline padding of space-6 and no bottom padding, so consecutive slots sit
+   24px apart (never doubled) and the first visible slot is 24px from the media
+   or the card top. Empty slots render with no padding and collapse to zero. The
+   footer adds the bottom padding. */
+.content-card__slot {
+  padding: var(--space-6) var(--space-6) 0;
+}
+.content-card__footer {
+  padding: var(--space-6);
 }
 
 /* ============================================================================

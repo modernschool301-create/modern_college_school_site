@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const signed = signUpload(config.folder);
+  const signed = signUpload(config);
   if (!signed) {
     return NextResponse.json(
       { error: 'Upload is not configured.' },

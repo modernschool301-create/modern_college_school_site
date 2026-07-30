@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { cloudinaryImage } from '@/lib/cloudinary-url';
 import { Band } from '@/components/band';
+import { Reveal } from '@/components/reveal';
+import { CardGrid } from '@/components/card-grid';
+import { ContentCard } from '@/components/content-card';
 import {
   POST_TYPES,
   POST_TYPE_LABELS,
@@ -132,28 +134,23 @@ export default async function NewsPage({
       {posts.length === 0 ? (
         <p className="mt-10 text-ink-muted">No posts to show yet.</p>
       ) : (
-        <div className="mt-10 grid-auto-fit">
-          {posts.map((post) => {
-            const cover = post.cover_image
-              ? cloudinaryImage(cloud, post.cover_image, 'c_fill,ar_16:9,w_800')
-              : '';
-            return (
-              <Link
+        // A single Reveal fades the whole grid in; ContentCards must be direct
+        // grid children for subgrid, so per-card stagger is not used (see Part 1).
+        <Reveal className="mt-10">
+          <CardGrid variant="media">
+            {posts.map((post) => (
+              <ContentCard
                 key={post.id}
                 href={`/news/${post.slug}`}
-                className="group flex flex-col overflow-hidden rounded-md border border-line bg-surface transition-transform duration-200 hover:-translate-y-0.5 hover:border-green-pale"
-              >
-                {cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={cover}
-                    alt=""
-                    className="aspect-video w-full object-cover"
-                  />
-                ) : (
-                  <div className="aspect-video w-full bg-green-mist" />
-                )}
-                <div className="flex flex-1 flex-col p-5">
+                // Cover switched from 16:9 to ContentCard's fixed 4:3 for a single
+                // consistent media shape across the card system. Null cover → the
+                // no-image green panel (replaces the old bg-green-mist block).
+                media={{
+                  cloudName: cloud,
+                  publicId: post.cover_image,
+                  alt: post.title,
+                }}
+                meta={
                   <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                     <span className="badge badge-neutral uppercase">
                       {POST_TYPE_LABELS[post.type]}
@@ -165,19 +162,18 @@ export default async function NewsPage({
                       <span>{NPT_DATE.format(new Date(post.published_at))}</span>
                     )}
                   </div>
-                  <h2 className="mt-2 font-display text-h3 text-green-ink">
-                    {post.title}
-                  </h2>
-                  {post.excerpt && (
-                    <p className="mt-2 flex-1 text-small text-ink-muted">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                }
+                title={post.title}
+                // Excerpt is PLAIN TEXT (not markdown, unlike achievements).
+                body={
+                  post.excerpt ? (
+                    <p className="text-small text-ink-muted">{post.excerpt}</p>
+                  ) : undefined
+                }
+              />
+            ))}
+          </CardGrid>
+        </Reveal>
       )}
     </Band>
   );

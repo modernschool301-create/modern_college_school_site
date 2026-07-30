@@ -57,16 +57,20 @@ export function ImageUploadField({
       const signed = await signRes.json();
 
       // 2. Upload straight to Cloudinary with the signed params. Every signed
-      //    param must be echoed EXACTLY as the server hashed it — including
-      //    `transformation`, the server-set ingest size cap, which is sent
-      //    verbatim from the sign response (never re-typed here) so the string
-      //    the browser posts and the string that was signed cannot drift apart.
+      //    param must be echoed EXACTLY as the server hashed it, sent verbatim
+      //    from the sign response (never re-typed here) so the string the browser
+      //    posts and the string that was signed cannot drift apart. The server
+      //    OMITS `transformation` for purposes that carry none (raw/PDF), so it
+      //    is appended only when present — an empty value would break the
+      //    signature, since the signed string then wouldn't contain it.
       const form = new FormData();
       form.append('file', file);
       form.append('api_key', signed.apiKey);
       form.append('timestamp', String(signed.timestamp));
       form.append('folder', signed.folder);
-      form.append('transformation', signed.transformation);
+      if (signed.transformation != null) {
+        form.append('transformation', signed.transformation);
+      }
       form.append('signature', signed.signature);
 
       const upRes = await fetch(
