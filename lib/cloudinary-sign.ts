@@ -14,6 +14,8 @@ export type UploadPurpose =
   | 'achievement-image'
   | 'testimonial-photo'
   | 'gallery-photo'
+  | 'programme-cover'
+  | 'faculty-photo'
   | 'download-file';
 
 // Cloudinary's storage class for the asset. It is NOT a signed parameter — it
@@ -81,6 +83,28 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   // photographs promoted. A separate cover purpose would differ in nothing.
   'gallery-photo': {
     folder: 'modern/gallery',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Programme cover images. Kept SEPARATE from faculty photographs below even
+  // though both are public images with identical settings: they are different
+  // kinds of asset with different lifecycles (a cover is replaced when the
+  // programme is redesigned, a faculty portrait when the person changes), and
+  // separate folders keep the Cloudinary console legible and make a future
+  // per-folder cleanup or quota check possible.
+  'programme-cover': {
+    folder: 'modern/programmes',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Faculty portraits, delivered as circular avatars on the programme detail
+  // page. The face-aware crop is a DELIVERY transform, not an ingest one — the
+  // stored original stays uncropped so the same photograph can be re-framed
+  // later without a re-upload.
+  'faculty-photo': {
+    folder: 'modern/faculty',
     requiresAdmin: true,
     resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,

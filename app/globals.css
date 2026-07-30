@@ -549,3 +549,47 @@
   border-radius: var(--radius-md);
   max-width: 100%;
 }
+
+/* TABLES — added for Programmes, where the curriculum/subject grid is the point
+   of the page (PRD 14). remark-gfm turns a Markdown pipe table into real
+   <table> markup; Preflight strips its borders and spacing, so they are
+   restored here.
+
+   The scroll behaviour is the important part. A subject table with five or six
+   columns is simply wider than a 375px phone, and the wrong fix is to let it
+   push the whole page sideways (design_system.md §5: the body must never scroll
+   horizontally). So the table itself becomes the scroll container:
+   `display: block` + `width: max-content` lets it size to its content and
+   `max-width: 100%` caps it at the measure, leaving the overflow to scroll
+   INSIDE the table's own box. `-webkit-overflow-scrolling` keeps that momentum
+   scrolling on iOS. The tbody/tr/td keep their table display values, so the
+   columns still align as a table within that box. */
+.rich-text table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+}
+.rich-text th,
+.rich-text td {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.rich-text th {
+  background-color: var(--green-mist);
+  color: var(--green-ink);
+  font-weight: 600;
+  /* A long header ("Optional third subject") should wrap rather than force the
+     whole table wider than it needs to be. */
+  text-wrap: balance;
+}
+/* Zebra striping: on a wide subject grid it is what keeps the eye on one row
+   while scrolling sideways. */
+.rich-text tbody tr:nth-child(even) {
+  background-color: color-mix(in oklab, var(--green-mist) 40%, transparent);
+}

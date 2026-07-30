@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Modules per PRD 27. News, Gallery, Achievements, Testimonials, Scholarships
-// and Downloads are live; the rest are existing stubs.
+// Modules per PRD 27. News, Gallery, Programmes, Achievements, Testimonials,
+// Scholarships and Downloads are live; the rest are existing stubs.
 const MODULES = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/news', label: 'News' },
