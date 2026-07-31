@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
+import { ApplyCta } from '@/components/apply-cta';
 import {
   facultyInitial,
   type Programme,
@@ -18,9 +19,12 @@ import {
 // this mirrors the programme detail page (PRD 14) one level down: eyebrow,
 // title, lead, cover, markdown body, faculty roster, Apply band.
 
+// `level` is carried for the Apply band: a specialization has no admission form
+// of its own — an applicant applies to the PARENT programme's intake — so the
+// contextual link resolves from the parent's level (see components/apply-cta).
 type ParentProgramme = Pick<
   Programme,
-  'id' | 'slug' | 'title' | 'cover_image'
+  'id' | 'slug' | 'title' | 'level' | 'cover_image'
 >;
 
 type DetailSpecialization = Pick<
@@ -58,7 +62,7 @@ async function fetchSpecialization(
 
   const { data: programmeData } = await supabase
     .from('programmes')
-    .select('id, slug, title, cover_image')
+    .select('id, slug, title, level, cover_image')
     .eq('slug', programmeSlug)
     .eq('is_published', true)
     .single();
@@ -256,27 +260,18 @@ export default async function SpecializationDetailPage({
         </Reveal>
       )}
 
-      {/* Apply call to action.
-          TODO (Phase 3): the same TODO the programme detail page carries — PRD
-          14 wants this CONTEXTUAL, shown only where admissions are open and
-          linking to the right form. That needs `admission_forms` (PRD 8.3),
-          which does not exist yet. Until then this is a generic link to
-          /admissions, correct on its own terms: that page carries the current
-          procedure and deadlines. Wire the contextual version when the
-          Admissions module lands — and note that a specialization is still NOT
-          a management_stream, so this must not become a stream picker here. */}
-      <Reveal className="mt-16 rounded-lg border border-line bg-green-mist p-8 text-center sm:p-10">
-        <p className="font-display text-h3 text-green-ink">
-          Interested in {specialization.title}?
-        </p>
-        <p className="mx-auto mt-3 max-w-lg text-ink-muted">
-          The admissions page sets out the procedure, what to bring, and how to
-          reach the admissions office.
-        </p>
-        <Link href="/admissions" className="btn-primary mt-6 text-sm">
-          Apply now
-        </Link>
-      </Reveal>
+      {/* Apply call to action — CONTEXTUAL, resolved from the PARENT
+          programme's level (PRD 14).
+
+          Note what this deliberately is NOT: a stream picker. A specialization
+          is a marketing card under a programme; a management_stream is
+          admissions reference data. They are separate tables with separate
+          rules, and the applicant chooses their stream ON the Management form,
+          from that table — never from this page. */}
+      <ApplyCta
+        level={programme.level}
+        heading={`Interested in ${specialization.title}?`}
+      />
     </Band>
   );
 }

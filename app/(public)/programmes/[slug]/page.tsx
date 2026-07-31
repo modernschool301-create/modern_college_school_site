@@ -9,6 +9,7 @@ import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
 import { CardGrid } from '@/components/card-grid';
 import { ContentCard } from '@/components/content-card';
+import { ApplyCta } from '@/components/apply-cta';
 import {
   PROGRAMME_LEVEL_LABELS,
   facultyInitial,
@@ -272,27 +273,12 @@ export default async function ProgrammeDetailPage({
         </Reveal>
       )}
 
-      {/* Apply call to action.
-          TODO (Phase 3): PRD 14 wants this CONTEXTUAL — shown only where
-          admissions for THIS programme are open, and linking to that
-          programme's own form. That needs `admission_forms` (PRD 8.3), which
-          does not exist yet, and a link between a programme and its form id.
-          Until then this is a generic link to /admissions, which is correct on
-          its own terms: the admissions page carries the current procedure and
-          deadlines. Wire the contextual version when the Admissions module
-          lands — do not add a placeholder table for it before then. */}
-      <Reveal className="mt-16 rounded-lg border border-line bg-green-mist p-8 text-center sm:p-10">
-        <p className="font-display text-h3 text-green-ink">
-          Interested in this programme?
-        </p>
-        <p className="mx-auto mt-3 max-w-lg text-ink-muted">
-          The admissions page sets out the procedure, what to bring, and how to
-          reach the admissions office.
-        </p>
-        <Link href="/admissions" className="btn-primary mt-6 text-sm">
-          Apply now
-        </Link>
-      </Reveal>
+      {/* Apply call to action — now CONTEXTUAL (PRD 14). ApplyCta resolves this
+          programme's LEVEL to the admission forms currently open at that level
+          and links straight to them, falling back to the generic /admissions
+          link when none is open. See that component for why the mapping is by
+          level and not by slug. */}
+      <ApplyCta level={programme.level} heading="Interested in this programme?" />
     </Band>
   );
 }
