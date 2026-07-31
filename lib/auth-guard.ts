@@ -60,3 +60,49 @@ export async function requireActiveAdmin(): Promise<{
 
   return { supabase, user };
 }
+
+/**
+ * Non-redirecting owner probe. The owner tier is the ONLY role that may create
+ * or manage staff accounts; a plain admin is not enough. Like the admin check
+ * this reads the role LIVE from profiles through a SECURITY DEFINER function,
+ * never from the session/JWT, so losing ownership bites on the next action.
+ *
+ * Use where the answer shapes the UI (hiding the Users link) rather than gating
+ * it — hiding a control is never the enforcement.
+ */
+export async function isActiveOwner(supabase: ServerClient): Promise<boolean> {
+  const { data, error } = await supabase.rpc('current_user_is_owner');
+
+  // A failed RPC and a legitimate `false` both arrive as falsy `data`, so
+  // without this they are indistinguishable in the logs. Observability only:
+  // an errored check still denies (fail closed).
+  if (error) {
+    console.error('[auth-guard] current_user_is_owner RPC failed:', error.message);
+  }
+  return !!data;
+}
+
+/**
+ * Redirecting guard for the Users page and every account-management action.
+ *
+ * A non-owner ADMIN is sent to /admin, not /login: they hold a perfectly valid
+ * session and may use every other module, so signing them out would be a lie
+ * about what went wrong. Someone with no session at all is still bounced to
+ * /login by requireActiveAdmin() first.
+ *
+ * This is defence-in-depth, not the enforcement. The real gate is the
+ * owner-only INSERT/UPDATE policy on profiles — a demoted owner who kept a page
+ * open and posted the form anyway fails at the database.
+ */
+export async function requireActiveOwner(): Promise<{
+  supabase: ServerClient;
+  user: User;
+}> {
+  const { supabase, user } = await requireActiveAdmin();
+
+  if (!(await isActiveOwner(supabase))) {
+    redirect('/admin');
+  }
+
+  return { supabase, user };
+}

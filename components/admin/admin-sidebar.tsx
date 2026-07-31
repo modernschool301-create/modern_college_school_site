@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 // Modules per PRD 27. News, Gallery, Programmes, Achievements, Testimonials,
-// Scholarships, Downloads and Settings are live; the rest are existing stubs.
+// Scholarships, Downloads, Settings and Users are live; the rest are existing
+// stubs.
+//
+// `ownerOnly` hides a link from an admin who is not the owner. COSMETIC ONLY —
+// it saves them clicking into a page that would bounce them straight back. The
+// page's own requireActiveOwner() is the gate, and the owner-only policies on
+// profiles are the enforcement.
 const MODULES = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/news', label: 'News' },
@@ -18,21 +24,22 @@ const MODULES = [
   { href: '/admin/submissions', label: 'Submissions' },
   { href: '/admin/contact-messages', label: 'Contact Messages' },
   { href: '/admin/settings', label: 'Settings' },
-  { href: '/admin/users', label: 'Users' },
+  { href: '/admin/users', label: 'Users', ownerOnly: true },
 ];
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ isOwner = false }: { isOwner?: boolean }) {
   const pathname = usePathname();
+  const visible = MODULES.filter((module) => !module.ownerOnly || isOwner);
   return (
     <nav
       aria-label="Admin sections"
       className="flex gap-1 overflow-x-auto p-3 md:flex-col md:overflow-visible"
     >
-      {MODULES.map((module) => {
+      {visible.map((module) => {
         const active = isActive(pathname, module.href);
         return (
           <Link

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isActiveOwner } from '@/lib/auth-guard';
 import { signOut } from './actions';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 
@@ -40,6 +41,12 @@ export default async function AdminLayout({
     .eq('id', user.id)
     .single();
 
+  // COSMETIC ONLY: whether to show the owner-only Users link. The admission
+  // decision above is unchanged — this adds nothing to it and gates nothing.
+  // /admin/users runs its own requireActiveOwner(), and the profiles policies
+  // are what actually refuse a non-owner's writes.
+  const owner = await isActiveOwner(supabase);
+
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between border-b border-line px-6 py-3">
@@ -66,7 +73,7 @@ export default async function AdminLayout({
 
       <div className="md:flex">
         <aside className="border-b border-line md:w-56 md:shrink-0 md:border-b-0 md:border-r">
-          <AdminSidebar />
+          <AdminSidebar isOwner={owner} />
         </aside>
         <div className="min-w-0 flex-1">{children}</div>
       </div>

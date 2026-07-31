@@ -1,0 +1,26 @@
+-- ============================================================================
+-- Phase 2 — Add the 'owner' value to public.user_role. THIS FILE DOES NOTHING
+-- ELSE, on purpose.
+--
+-- ┌─ WHY THIS IS ITS OWN MIGRATION ───────────────────────────────────────────┐
+-- │ Postgres will not let a newly-added enum value be USED in the same        │
+-- │ transaction that added it. Since PG 12 the ALTER itself is allowed inside │
+-- │ a transaction block, but any statement that then references the new label │
+-- │ fails with "unsafe use of new value of enum type".                        │
+-- │                                                                           │
+-- │ The Supabase CLI runs each migration FILE in its own transaction. The     │
+-- │ next migration (…150000_owner_role_and_users.sql) both writes a function  │
+-- │ body containing `role = 'owner'` and runs an UPDATE setting a row to      │
+-- │ 'owner' — every one of which needs the label to already be committed. So  │
+-- │ the value is added here and used there, one file later.                   │
+-- │                                                                           │
+-- │ Do not merge these two files. The split IS the fix.                       │
+-- └───────────────────────────────────────────────────────────────────────────┘
+--
+-- The original migration kept role as an ENUM rather than a boolean expressly so
+-- a tier could be added by one line instead of a schema refactor (see
+-- 20260728120000_profiles_and_auth.sql §1). This is that line.
+--
+-- IF NOT EXISTS makes the file safely re-runnable against a database where it
+-- has already been applied.
+alter type public.user_role add value if not exists 'owner';
