@@ -1,15 +1,39 @@
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
+import { statOrFallback } from '@/lib/settings';
 import { CountUp } from './count-up';
 
-// Institutional figures. HARDCODED SENSIBLE DEFAULTS for now — these will be
-// settings-driven later (see the TODO on app/(public)/page.tsx). Real numbers
-// so the counters read 30+/1,200+/60+, never 0+.
-const STATS = [
-  { to: 30, suffix: '+', label: 'years of teaching' },
-  { to: 1200, suffix: '+', label: 'students' },
-  { to: 60, suffix: '+', label: 'teachers' },
-];
+// Institutional figures, now SETTINGS-DRIVEN (PRD 11). The homepage reads the
+// three values from the settings store and passes them in.
+//
+// The hardcoded figures survive as FALLBACKS, not as the source of truth: a
+// blank setting renders the real number below rather than an empty stat or a
+// counter climbing to 0. PRD 11 is explicit that the current site's unfilled
+// "0 +" is the thing to avoid.
+const STAT_FALLBACKS = {
+  years: '30+',
+  students: '1,200+',
+  teachers: '60+',
+};
+
+// A statistic is stored as ONE free-text string ('1,200+') because the suffix is
+// part of what the school wants displayed — see the Settings page. The counter,
+// though, needs a number.
+//
+// So: split the leading digits (commas allowed) from whatever follows, animate
+// the number, and render the remainder statically beside it. '1,200+' counts up
+// to 1,200 with a '+' pinned next to it, exactly as the hardcoded version did.
+//
+// A value with no leading number ('over a thousand') simply does not animate —
+// it renders verbatim. That is the right failure: the figure the school typed is
+// always what a visitor reads, and only the animation is negotiable.
+function splitStat(value: string): { to: number; suffix: string } | null {
+  const match = value.trim().match(/^([\d,]+)(.*)$/);
+  if (!match) return null;
+  const to = Number(match[1].replace(/,/g, ''));
+  if (!Number.isFinite(to)) return null;
+  return { to, suffix: match[2] };
+}
 
 const iconProps = {
   width: 26,
@@ -56,7 +80,32 @@ const BENEFITS = [
 // One "why Modern, by the numbers" block directly under the hero: the three
 // story benefits AND the three headline stats live together here (the old
 // separate lower stats band is gone). Benefits row on top, stats row below.
-export function ThreeBenefits() {
+export function ThreeBenefits({
+  statYears = '',
+  statStudents = '',
+  statTeachers = '',
+}: {
+  statYears?: string;
+  statStudents?: string;
+  statTeachers?: string;
+}) {
+  // Fallbacks are applied HERE rather than at the call site, so the component
+  // renders real figures whatever it is handed — including nothing at all.
+  const stats = [
+    {
+      value: statOrFallback(statYears, STAT_FALLBACKS.years),
+      label: 'years of teaching',
+    },
+    {
+      value: statOrFallback(statStudents, STAT_FALLBACKS.students),
+      label: 'students',
+    },
+    {
+      value: statOrFallback(statTeachers, STAT_FALLBACKS.teachers),
+      label: 'teachers',
+    },
+  ];
+
   return (
     <Band tone="paper">
       <Reveal>
@@ -89,15 +138,24 @@ export function ThreeBenefits() {
         as="dl"
         className="mt-14 grid gap-10 border-t border-line pt-14 text-center sm:grid-cols-3"
       >
-        {STATS.map((stat) => (
-          <div key={stat.label} className="flex flex-col items-center gap-1">
-            <dd className="font-display text-h1 font-semibold text-green-brand">
-              <CountUp to={stat.to} />
-              {stat.suffix}
-            </dd>
-            <dt className="text-small text-ink-muted">{stat.label}</dt>
-          </div>
-        ))}
+        {stats.map((stat) => {
+          const parsed = splitStat(stat.value);
+          return (
+            <div key={stat.label} className="flex flex-col items-center gap-1">
+              <dd className="font-display text-h1 font-semibold text-green-brand">
+                {parsed ? (
+                  <>
+                    <CountUp to={parsed.to} />
+                    {parsed.suffix}
+                  </>
+                ) : (
+                  stat.value
+                )}
+              </dd>
+              <dt className="text-small text-ink-muted">{stat.label}</dt>
+            </div>
+          );
+        })}
       </Reveal>
     </Band>
   );

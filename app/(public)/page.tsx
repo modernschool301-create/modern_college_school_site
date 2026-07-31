@@ -8,16 +8,32 @@ import { NewsTeaser } from '@/components/home/news-teaser';
 import { ClosingCTA } from '@/components/home/closing-cta';
 import { StickyApplyCta } from '@/components/home/sticky-apply-cta';
 import { HomePopup } from '@/components/home/home-popup';
-import { heroMedia } from '@/lib/cloudinary-url';
+import { cloudinaryImage, heroMedia } from '@/lib/cloudinary-url';
+import { getSettings, popupFromSettings } from '@/lib/settings';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+
   // Built server-side: the (non-public) cloud name stays on the server; only the
   // resulting public delivery URLs reach the browser. Falls back cleanly to the
   // green-forest panel if the cloud name isn't configured.
   const media = heroMedia(
-    process.env.CLOUDINARY_CLOUD_NAME ?? '',
+    cloud,
     process.env.NEXT_PUBLIC_HERO_VIDEO_ID ?? 'modern/hero',
   );
+
+  // ONE settings read for both the statistics and the pop-up. This runs as anon,
+  // so RLS returns only the allowlisted public keys — office_notification_email
+  // is not in the result at all, not merely unused.
+  const settings = await getSettings();
+  const popup = popupFromSettings(settings);
+
+  // c_limit is a BOUNDING BOX, not a crop: the banner is expected portrait or
+  // square (PRD 11) and keeps its own proportions. A c_fill with an aspect ratio
+  // would slice the school's finished artwork.
+  const popupImageUrl = popup.image
+    ? cloudinaryImage(cloud, popup.image, 'c_limit,w_800')
+    : undefined;
 
   return (
     <>
@@ -27,7 +43,11 @@ export default function HomePage() {
       {/* Story-first order: hero → value prop + stats (one block) → human
           voices → programmes → supporting facilities → news → closing CTA. */}
       <Hero media={media} />
-      <ThreeBenefits />
+      <ThreeBenefits
+        statYears={settings.stat_years}
+        statStudents={settings.stat_students}
+        statTeachers={settings.stat_teachers}
+      />
       <VoicePreview />
       <ProgrammesOverview />
       <FeaturesStrip />
@@ -37,10 +57,16 @@ export default function HomePage() {
       {/* Mobile-only persistent Apply button. */}
       <StickyApplyCta />
 
-      {/* Homepage pop-up shell (PRD Decision 12). Inert until the Settings
-          module supplies popup_is_active + banner image/link/alt. TODO: wire
-          these props from the settings store. */}
-      <HomePopup active={false} />
+      {/* Homepage announcement (PRD Decision 12) — HOMEPAGE ONLY, deliberately
+          mounted here and nowhere else. Renders nothing unless an admin has
+          both uploaded a banner and switched it on. */}
+      <HomePopup
+        active={popup.isActive}
+        imageUrl={popupImageUrl}
+        imageId={popup.image}
+        linkUrl={popup.linkUrl || undefined}
+        altText={popup.altText}
+      />
     </>
   );
 }

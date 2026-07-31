@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { Resend } from 'resend';
 import { createServiceClient } from '@/lib/supabase/service';
 import { clientIpFromHeaders, evaluateSubmission } from '@/lib/bot-protection';
+import { getOfficeNotificationEmail } from '@/lib/settings';
 
 export type ContactState = { ok: boolean; error: string | null };
 
@@ -86,11 +87,16 @@ async function notifyOffice(msg: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM;
-  const to = process.env.OFFICE_NOTIFICATION_EMAIL;
+  // The Settings page's address when one is configured, otherwise
+  // OFFICE_NOTIFICATION_EMAIL — so the office can redirect its mail without a
+  // redeploy, while a blank or unreadable setting still lands where it always
+  // did. Never fails to nothing (PRD 31.3: a silent notification failure is the
+  // costliest failure in the system).
+  const to = await getOfficeNotificationEmail();
 
   if (!apiKey || !from || !to) {
     console.error(
-      'Contact notification skipped: missing RESEND_API_KEY, RESEND_FROM, or OFFICE_NOTIFICATION_EMAIL.',
+      'Contact notification skipped: missing RESEND_API_KEY, RESEND_FROM, or an office notification address (Settings, or OFFICE_NOTIFICATION_EMAIL).',
     );
     return;
   }

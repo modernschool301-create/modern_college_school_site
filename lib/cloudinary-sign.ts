@@ -18,6 +18,7 @@ export type UploadPurpose =
   | 'faculty-photo'
   | 'specialization-image'
   | 'specialization-faculty-photo'
+  | 'popup-banner'
   | 'download-file';
 
 // Cloudinary's storage class for the asset. It is NOT a signed parameter — it
@@ -129,6 +130,17 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   // auditable, which a shared purpose would foreclose.
   'specialization-faculty-photo': {
     folder: 'modern/faculty',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // The homepage announcement banner (Decision 12). A singleton in practice —
+  // there is only ever one active pop-up — but each upload is a new asset, so
+  // replaced banners accumulate in this folder until the orphan sweep
+  // (PRD 10.3) collects them. Its own folder so that sweep, and any quota check,
+  // can see the pop-up's history at a glance.
+  'popup-banner': {
+    folder: 'modern/popup',
     requiresAdmin: true,
     resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
