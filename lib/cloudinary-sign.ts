@@ -16,6 +16,8 @@ export type UploadPurpose =
   | 'gallery-photo'
   | 'programme-cover'
   | 'faculty-photo'
+  | 'specialization-image'
+  | 'specialization-faculty-photo'
   | 'download-file';
 
 // Cloudinary's storage class for the asset. It is NOT a signed parameter — it
@@ -104,6 +106,28 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   // stored original stays uncropped so the same photograph can be re-framed
   // later without a re-upload.
   'faculty-photo': {
+    folder: 'modern/faculty',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Specialization (sub-programme) card images. Its own folder for the same
+  // reason programme covers and faculty portraits have theirs: a distinct kind
+  // of asset with its own lifecycle, and a legible Cloudinary console.
+  'specialization-image': {
+    folder: 'modern/specializations',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Faculty portraits on a SPECIALIZATION's roster. Same folder as
+  // 'faculty-photo' on purpose — this is the same kind of asset (a teacher's
+  // portrait, delivered as a circular avatar with the same face-aware crop) and
+  // splitting the folder would scatter one set of people across two places in
+  // the Cloudinary console. It is a separate PURPOSE rather than a reuse of
+  // 'faculty-photo' so the two rosters stay independently rate-limitable and
+  // auditable, which a shared purpose would foreclose.
+  'specialization-faculty-photo': {
     folder: 'modern/faculty',
     requiresAdmin: true,
     resourceType: 'image',

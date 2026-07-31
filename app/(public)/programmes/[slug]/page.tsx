@@ -7,11 +7,14 @@ import { createClient } from '@/lib/supabase/server';
 import { cloudinaryImage } from '@/lib/cloudinary-url';
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
+import { CardGrid } from '@/components/card-grid';
+import { ContentCard } from '@/components/content-card';
 import {
   PROGRAMME_LEVEL_LABELS,
   facultyInitial,
   type Programme,
   type ProgrammeFaculty,
+  type ProgrammeSpecialization,
 } from '@/lib/programmes';
 
 type DetailProgramme = Pick<
@@ -20,6 +23,13 @@ type DetailProgramme = Pick<
 >;
 
 type RosterMember = Pick<ProgrammeFaculty, 'id' | 'name' | 'qualification' | 'photo'>;
+
+// `slug` is the last segment of the card's href — each specialization now has a
+// page of its own at /programmes/<programme>/<specialization>.
+type SpecializationCard = Pick<
+  ProgrammeSpecialization,
+  'id' | 'title' | 'slug' | 'description' | 'image'
+>;
 
 // The `.eq('is_published', true)` is belt-and-braces on top of RLS, which
 // already hides drafts from anon: an unpublished programme returns no row here,
@@ -91,6 +101,16 @@ export default async function ProgrammeDetailPage({
 
   const faculty = (data ?? []) as RosterMember[];
 
+  // Specializations carry no published flag either — same parent-gated RLS as
+  // faculty, so this read is safe on its own terms.
+  const { data: specializationData } = await supabase
+    .from('programme_specializations')
+    .select('id, title, slug, description, image')
+    .eq('programme_id', programme.id)
+    .order('display_order', { ascending: true });
+
+  const specializations = (specializationData ?? []) as SpecializationCard[];
+
   const cover = programme.cover_image
     ? cloudinaryImage(cloud, programme.cover_image, 'c_fill,ar_16:9,w_1600')
     : '';
@@ -101,12 +121,17 @@ export default async function ProgrammeDetailPage({
         ← All programmes
       </Link>
 
-      <Reveal>
+      {/* Title/intro and the body below share ONE reading column: `measure`
+          (68ch, the design system's own readability control) centred with
+          mx-auto. Two elements rather than one wrapper because the cover image
+          sits between them and stays full-width. Only the CONTAINER is centred
+          — the text inside keeps its normal left alignment. */}
+      <Reveal className="measure mx-auto">
         <p className="mt-6 text-eyebrow uppercase tracking-wide text-green-brand">
           Programme
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="max-w-3xl font-display text-h1 text-green-ink">
+          <h1 className="font-display text-h1 text-green-ink">
             {programme.title}
           </h1>
           <span className="badge badge-neutral">
@@ -115,9 +140,7 @@ export default async function ProgrammeDetailPage({
         </div>
 
         {programme.intro && (
-          <p className="mt-4 max-w-3xl text-lead text-ink-muted">
-            {programme.intro}
-          </p>
+          <p className="mt-4 text-lead text-ink-muted">{programme.intro}</p>
         )}
       </Reveal>
 
@@ -135,10 +158,60 @@ export default async function ProgrammeDetailPage({
         // into real <table> markup; .rich-text styles them and puts a wide one
         // in its own horizontal scroller so a phone never has to scroll the
         // whole page sideways.
-        <Reveal className="rich-text mt-12 max-w-3xl">
+        <Reveal className="rich-text measure mx-auto mt-12">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {programme.body}
           </ReactMarkdown>
+        </Reveal>
+      )}
+
+      {/* Specializations (sub-programmes) — the streams, majors, or subject
+          combinations offered WITHIN this programme. A general capability, not
+          a +2 Management feature: any programme with rows gets the section, and
+          a programme with none omits it entirely rather than showing an empty
+          heading, exactly as the faculty roster does below.
+
+          These are NOT the Admissions stream picker. That list is
+          `management_streams` (Phase 3, PRD Decision 5) — a separate table with
+          separate rules, deliberately not cross-referenced here.
+
+          Full-width like the roster below, outside the centred reading column:
+          it is a card grid, not running text. Same CardGrid/ContentCard as the
+          /programmes index, so a sub-programme card and a programme card are
+          the same object at different levels — including the link: each card
+          now leads to the specialization's own page. The href uses the URL's
+          own `slug`, which is exactly the slug fetchProgramme matched on. No
+          meta or footer slot: a specialization has no level badge or date. */}
+      {specializations.length > 0 && (
+        <Reveal className="mt-16">
+          <h2 className="font-display text-h2 text-green-ink">Specializations</h2>
+          <p className="mt-3 max-w-2xl text-ink-muted">
+            The subject combinations offered within this programme.
+          </p>
+
+          <CardGrid variant="media" className="mt-8">
+            {specializations.map((specialization) => (
+              <ContentCard
+                key={specialization.id}
+                href={`/programmes/${slug}/${specialization.slug}`}
+                // A null image falls back to the shared filler, exactly as on
+                // the index — ContentCard handles that itself.
+                media={{
+                  cloudName: cloud,
+                  publicId: specialization.image,
+                  alt: specialization.title,
+                }}
+                title={specialization.title}
+                // Plain text by contract (the admin field says so), so it
+                // renders directly — no Markdown pass on a card.
+                body={
+                  specialization.description ? (
+                    <p className="text-ink-muted">{specialization.description}</p>
+                  ) : undefined
+                }
+              />
+            ))}
+          </CardGrid>
         </Reveal>
       )}
 

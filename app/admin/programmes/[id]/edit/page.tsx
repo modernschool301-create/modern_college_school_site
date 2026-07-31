@@ -6,13 +6,18 @@ import {
   ProgrammeFacultySection,
   type AdminFacultyRow,
 } from '@/components/admin/programmes/programme-faculty';
+import {
+  ProgrammeSpecializationsSection,
+  type AdminSpecializationRow,
+} from '@/components/admin/programmes/programme-specializations';
 import { updateProgramme } from '../../actions';
 import type { Programme } from '@/lib/programmes';
 
-// Like the Gallery album editor, this screen manages TWO things: the programme's
-// own fields, and the programme's faculty rows. They are separate forms posting
-// to separate actions — saving the programme redirects back to the list, while
-// faculty actions stay here, so the two never fight over one submit.
+// Like the Gallery album editor, this screen manages a parent and its children —
+// here the programme's own fields, its specializations, and its faculty rows.
+// Every section is a separate form posting to a separate action: saving the
+// programme redirects back to the list, while child actions stay here, so no two
+// ever fight over one submit.
 export default async function EditProgrammePage({
   params,
 }: {
@@ -37,7 +42,35 @@ export default async function EditProgrammePage({
     .eq('programme_id', programme.id)
     .order('display_order', { ascending: true });
 
+  const { data: specializationData } = await supabase
+    .from('programme_specializations')
+    .select('id, title, slug, description, image, display_order')
+    .eq('programme_id', programme.id)
+    .order('display_order', { ascending: true });
+
+  const specializationRows = specializationData ?? [];
+
+  // How many faculty each specialization has, so the list can say what is behind
+  // its Edit link. ONE query for all of them, tallied here — not one per row.
+  const specializationIds = specializationRows.map((s) => s.id as string);
+  const { data: specFacultyRows } = specializationIds.length
+    ? await supabase
+        .from('specialization_faculty')
+        .select('specialization_id')
+        .in('specialization_id', specializationIds)
+    : { data: [] };
+
+  const facultyCounts = new Map<string, number>();
+  for (const row of specFacultyRows ?? []) {
+    const key = row.specialization_id as string;
+    facultyCounts.set(key, (facultyCounts.get(key) ?? 0) + 1);
+  }
+
   const faculty = (facultyData ?? []) as AdminFacultyRow[];
+  const specializations = specializationRows.map((row) => ({
+    ...row,
+    facultyCount: facultyCounts.get(row.id as string) ?? 0,
+  })) as AdminSpecializationRow[];
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
 
   // Bind the id so the form's action matches (state, formData) => state.
@@ -76,6 +109,18 @@ export default async function EditProgrammePage({
             cover_image: programme.cover_image,
             is_published: programme.is_published,
           }}
+        />
+      </div>
+
+      <hr className="mt-12 border-line" />
+
+      {/* Specializations before faculty, the same order they appear in on the
+          public page, so the edit screen reads like the page it produces. */}
+      <div className="mt-12">
+        <ProgrammeSpecializationsSection
+          programmeId={programme.id}
+          specializations={specializations}
+          cloudName={cloudName}
         />
       </div>
 

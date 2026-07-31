@@ -525,9 +525,19 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* Bullets read as branded content rather than default browser output: a small
+   green square instead of a black disc. `list-style: square` + a scaled-down,
+   green ::marker gets there WITHOUT `list-style: none` + a ::before — which is
+   the usual recipe but silently drops the list role in Safari/VoiceOver. Here
+   the list stays a real list; a browser that ignores ::marker styling just
+   shows a default-coloured square. */
 .rich-text ul {
-  list-style: disc;
+  list-style: square;
   padding-left: 1.5em;
+}
+.rich-text ul > li::marker {
+  color: var(--green-brand);
+  font-size: 0.85em;
 }
 .rich-text ol {
   list-style: decimal;
