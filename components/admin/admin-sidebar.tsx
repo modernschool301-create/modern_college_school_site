@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Modules per PRD 27. News, Gallery, Programmes, Achievements, Testimonials,
-// Scholarships, Downloads, Settings and Users are live; the rest are existing
-// stubs.
+// Modules per PRD 27. Every link below is now a built module — Admissions was
+// the last stub, and it completes the set.
 //
 // `ownerOnly` hides a link from an admin who is not the owner. COSMETIC ONLY —
 // it saves them clicking into a page that would bounce them straight back. The

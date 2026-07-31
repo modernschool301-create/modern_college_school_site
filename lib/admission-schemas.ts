@@ -341,9 +341,22 @@ export type AdmissionForm = {
   display_order: number;
 };
 
+// What the PUBLIC picker needs, and deliberately no more. The applicant page
+// selects exactly these two columns, so this type is also a statement that
+// display_order and is_available are query concerns there, never rendered.
 export type ManagementStream = {
   id: string;
   name: string;
+};
+
+// The WHOLE row, for /admin/admissions. Kept separate from the picker shape
+// above rather than widening it, because the two readers genuinely differ: the
+// public page must not be able to read a retired stream into a variable it then
+// renders, and the admin panel cannot work without is_available (it is the
+// retire control) or display_order (it is the reorder control).
+export type ManagementStreamRow = ManagementStream & {
+  display_order: number;
+  is_available: boolean;
 };
 
 export type AdmissionSubmission = {
