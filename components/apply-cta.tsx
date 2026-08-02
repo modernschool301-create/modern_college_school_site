@@ -21,9 +21,13 @@ import type { ProgrammeLevel } from '@/lib/programmes';
 // │ a nullable `admission_form_id` column on programmes, not a heuristic here.│
 // │                                                                           │
 // │ 'secondary' maps to NO form at all — the three admission forms cover +2   │
-// │ and Bachelor only. A school-level programme falls through to the generic  │
-// │ /admissions link, which is correct rather than broken: that page carries  │
-// │ the procedure and the office's contact details.                           │
+// │ and Bachelor only. A school-level programme, and any level whose forms    │
+// │ are all closed, falls through to /apply: the one page that answers "what  │
+// │ CAN I apply for right now?", listing whatever is open site-wide (or its   │
+// │ own honest closed state with the office's contact link when nothing is).  │
+// │ That keeps a fallback Apply button an apply action — /admissions, which   │
+// │ only explains the procedure, is reached from the separate informational   │
+// │ link in the open-forms branch below.                                      │
 // └───────────────────────────────────────────────────────────────────────────┘
 export async function ApplyCta({
   level,
@@ -52,9 +56,10 @@ export async function ApplyCta({
     forms = (data ?? []) as AdmissionForm[];
   }
 
-  // Nothing open (or no form at this level): the generic link, unchanged from
-  // what this block said before admissions existed. Never link to a form that
-  // is closed — it would refuse the submission on arrival.
+  // Nothing open (or no form at this level): send them to /apply, which shows
+  // whatever IS open elsewhere in the school and owns the closed state when
+  // nothing is. Never link to a form that is closed — it would refuse the
+  // submission on arrival.
   if (forms.length === 0) {
     return (
       <Reveal className="mt-16 rounded-lg border border-line bg-green-mist p-8 text-center sm:p-10">
@@ -63,7 +68,7 @@ export async function ApplyCta({
           The admissions page sets out the procedure, what to bring, and how to
           reach the admissions office.
         </p>
-        <Link href="/admissions" className="btn-primary mt-6 text-sm">
+        <Link href="/apply" className="btn-primary mt-6 text-sm">
           Apply now
         </Link>
       </Reveal>

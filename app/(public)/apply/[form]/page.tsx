@@ -112,9 +112,9 @@ export default async function ApplyFormPage({
           </p>
           <p className="mt-3 text-ink-muted">
             Applications for this programme are not being accepted right now. The
-            admissions page lists every intake that is currently open.
+            apply page lists every intake that is currently open.
           </p>
-          <Link href="/admissions" className="btn-secondary mt-6 text-sm">
+          <Link href="/apply" className="btn-secondary mt-6 text-sm">
             See open admissions
           </Link>
         </Reveal>

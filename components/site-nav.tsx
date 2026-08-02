@@ -58,7 +58,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { kind: 'link', href: '/contact', label: 'Contact' },
 ] as const;
 
-const APPLY_HREF = '/admissions';
+const APPLY_HREF = '/apply';
 const LOGO_ALT = 'Modern College & School';
 
 function isActive(pathname: string, href: string): boolean {

@@ -89,7 +89,7 @@ export function Hero({ media }: { media: HeroMedia }) {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/admissions" className="btn-primary">
+              <Link href="/apply" className="btn-primary">
                 Apply now
               </Link>
               <Link

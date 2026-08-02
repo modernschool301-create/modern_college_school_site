@@ -5,7 +5,7 @@ import Link from 'next/link';
 export function StickyApplyCta() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-green-brand/20 bg-paper/95 p-3 backdrop-blur md:hidden">
-      <Link href="/admissions" className="btn-primary w-full">
+      <Link href="/apply" className="btn-primary w-full">
         Apply now
       </Link>
     </div>

@@ -15,7 +15,7 @@ export function ClosingCTA() {
           Start your application today, and our admissions team will be in touch
           to guide you through every step.
         </p>
-        <Link href="/admissions" className="btn-primary mt-8">
+        <Link href="/apply" className="btn-primary mt-8">
           Apply now
         </Link>
       </Reveal>
