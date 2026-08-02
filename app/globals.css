@@ -615,6 +615,79 @@
   }
 }
 
+/* ============================================================================
+   Hero seam (components/home/hero.tsx). The hero is a solid green message panel
+   beside the video, and the join between the two is a SHARP diagonal — a clean
+   geometric edge, no dissolve. It is built as two stacked layers rather than two
+   panels clipped against each other (two panels meeting on a shared edge risk a
+   hairline gap or a sub-pixel misalignment exactly where the eye is drawn):
+
+     1. BASE — the <section>'s own bg-green-forest. ONE solid rectangle spanning
+        the hero's full width and height, behind everything else.
+     2. MEDIA — `.hero-media`, the video/poster layer, sitting on the base and
+        deliberately OVERSHOOTING its grid cell so it reaches past the join. A
+        clip-path cuts its leading edge on a gentle diagonal; where the cut
+        removes media the base simply shows through.
+
+   Why that ordering matters, now that nothing masks the cut: the base is one
+   uninhabited rectangle UNDER the whole media layer, not a panel butted up
+   against it, so there is no shared boundary to leave a gap at. The clip can
+   land on any sub-pixel it likes and the pixel behind it is always the same
+   green. Nothing lighter exists anywhere in the stack inside the hero either —
+   the <section> paints --green-forest across its entire box, so the body's
+   near-white --paper is fully covered and can never surface as a light hairline
+   at the edge. The only colour step at the cut is the intended one: video
+   against green.
+
+   The hero's text sits in its own layer on the base (z-10 in the component) and
+   is unaffected by the clip, so it never has to track the diagonal's position.
+
+   Nothing here animates — a static shape — so there is no prefers-reduced-motion
+   branch to write for the seam itself.
+   ============================================================================ */
+
+/* MOBILE-FIRST — the stacked layout, where the seam is HORIZONTAL (panel above,
+   16:9 video band below), so the treatment is recalculated for that orientation
+   rather than being the desktop polygon turned on its side.
+
+   The layer is pulled 10% of the band's height UP into the panel's bottom
+   padding (pb-16 = 64px; the overshoot is ~22px on a 390px phone, ~43px at
+   767px, so it always stays inside that padding and never reaches the text).
+   That overshoot is what the diagonal then spends: the polygon gives back at the
+   top-left roughly what the overshoot added, so the visible video band keeps its
+   16:9 presence instead of being shaved down by the cut. */
+.hero-media {
+  position: absolute;
+  inset: 0;
+  top: -10%;
+  /* Deep green under the media so the shape is never a blank/black area while
+     the video loads. It lives on the CLIPPED layer, not on the cell behind it —
+     on the cell it would show through the cut and put --green-ink on the wrong
+     side of the seam, which is precisely the visible step this design avoids. */
+  background-color: var(--green-ink);
+  /* Top edge rises left → right: 11% of the layer's height at the left edge,
+     flush at the right. The band is a fixed 16:9 at every phone width, so this
+     is a constant ~4° — a clear diagonal, never a wedge. */
+  clip-path: polygon(0 11%, 100% 0, 100% 100%, 0 100%);
+}
+
+/* DESKTOP — the side-by-side layout, where the seam is VERTICAL. 768px is
+   Tailwind's `md`, i.e. the exact width at which the hero grid stops stacking
+   (md:grid-cols-2 in the component); the two must stay in sync. */
+@media (min-width: 768px) {
+  .hero-media {
+    top: 0;
+    /* Start left of centre: -6% of the half-width cell = 3% of the hero, so the
+       media has room to be cut back without exposing the left panel's text. */
+    left: -6%;
+    /* A restrained editorial rake (§1), not a sports-brand angle: 8% of the
+       layer's width across the FULL height works out at ~4.2% of the hero's
+       width, and the same figure holds at every desktop width because the layer
+       is sized as a percentage of the hero. */
+    clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
 /* Text shadow so white nav text stays legible over the LIGHT parts of the hero
    video (faces, light jerseys), on top of the scrim below. */
 .nav-legible {
