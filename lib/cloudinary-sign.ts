@@ -18,6 +18,7 @@ export type UploadPurpose =
   | 'faculty-photo'
   | 'specialization-image'
   | 'specialization-faculty-photo'
+  | 'leadership-photo'
   | 'popup-banner'
   | 'download-file';
 
@@ -130,6 +131,20 @@ export const UPLOAD_PURPOSES: Record<UploadPurpose, PurposeConfig> = {
   // auditable, which a shared purpose would foreclose.
   'specialization-faculty-photo': {
     folder: 'modern/faculty',
+    requiresAdmin: true,
+    resourceType: 'image',
+    ingestTransformation: IMAGE_INGEST_TRANSFORMATION,
+  },
+  // Leadership portraits (Principal, Chairperson, …). Its own folder rather
+  // than a reuse of 'faculty-photo': these are a handful of long-lived,
+  // deliberately-commissioned portraits with a completely different lifecycle
+  // from the teaching roster, and keeping them separate means a quota check or
+  // an orphan sweep can see the leadership set at a glance. The 4:3 face-aware
+  // crop is a DELIVERY transform on the homepage card, not an ingest one, so
+  // the stored original stays uncropped and can be re-framed without a
+  // re-upload.
+  'leadership-photo': {
+    folder: 'modern/leadership',
     requiresAdmin: true,
     resourceType: 'image',
     ingestTransformation: IMAGE_INGEST_TRANSFORMATION,

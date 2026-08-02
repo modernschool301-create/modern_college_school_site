@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Band } from '@/components/band';
 import { Reveal } from '@/components/reveal';
 import { statOrFallback } from '@/lib/settings';
@@ -91,18 +92,26 @@ export function ThreeBenefits({
 }) {
   // Fallbacks are applied HERE rather than at the call site, so the component
   // renders real figures whatever it is handed — including nothing at all.
+  //
+  // `accent` is the card's own --stat-accent (see .stat-card in globals.css):
+  // an EXISTING green token, stepping pale → brand → forest across the row so
+  // the three cards are distinguishable at a glance without inventing a colour.
+  // Not --green-signature: §1 rations that to CTAs and active states.
   const stats = [
     {
       value: statOrFallback(statYears, STAT_FALLBACKS.years),
       label: 'years of teaching',
+      accent: 'var(--green-pale)',
     },
     {
       value: statOrFallback(statStudents, STAT_FALLBACKS.students),
       label: 'students',
+      accent: 'var(--green-brand)',
     },
     {
       value: statOrFallback(statTeachers, STAT_FALLBACKS.teachers),
       label: 'teachers',
+      accent: 'var(--green-forest)',
     },
   ];
 
@@ -132,16 +141,25 @@ export function ThreeBenefits({
       </Reveal>
 
       {/* Stats row — counts up on scroll; CountUp shows the final value
-          immediately under prefers-reduced-motion. */}
+          immediately under prefers-reduced-motion. Each figure now sits on its
+          own .stat-card, which adds the accent rule, the top wash, and the
+          hover; all of that is decoration around the SAME count-up and the same
+          Reveal stagger, both unchanged. */}
       <Reveal
         stagger
         as="dl"
-        className="mt-14 grid gap-10 border-t border-line pt-14 text-center sm:grid-cols-3"
+        className="mt-14 grid gap-6 border-t border-line pt-14 text-center sm:grid-cols-3"
       >
         {stats.map((stat) => {
           const parsed = splitStat(stat.value);
           return (
-            <div key={stat.label} className="flex flex-col items-center gap-1">
+            <div
+              key={stat.label}
+              // The card's identity colour. An inline custom property, not a
+              // class, so the rule and the wash both read one value.
+              style={{ '--stat-accent': stat.accent } as CSSProperties}
+              className="stat-card flex flex-col items-center gap-3 p-8"
+            >
               <dd className="font-display text-h1 font-semibold text-green-brand">
                 {parsed ? (
                   <>

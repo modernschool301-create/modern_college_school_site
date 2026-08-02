@@ -21,7 +21,9 @@ const TESTIMONIALS = [
 
 export function VoicePreview() {
   return (
-    <Band tone="mist">
+    // paper, not mist: it now follows ProgrammesOverview (mist) and precedes
+    // NewsTeaser (forest).
+    <Band tone="paper">
       <Reveal>
         <p className="text-eyebrow uppercase tracking-wide text-green-brand">
           Student&apos;s voice

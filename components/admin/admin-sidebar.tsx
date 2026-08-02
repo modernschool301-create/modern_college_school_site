@@ -16,6 +16,7 @@ const MODULES = [
   { href: '/admin/gallery', label: 'Gallery' },
   { href: '/admin/programmes', label: 'Programmes' },
   { href: '/admin/achievements', label: 'Achievements' },
+  { href: '/admin/leadership', label: 'Leadership' },
   { href: '/admin/testimonials', label: 'Testimonials' },
   { href: '/admin/scholarships', label: 'Scholarships' },
   { href: '/admin/downloads', label: 'Downloads' },

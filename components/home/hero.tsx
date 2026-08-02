@@ -60,8 +60,8 @@ export function Hero({ media }: { media: HeroMedia }) {
         <div className="flex items-center bg-green-forest px-6 pb-16 pt-28 sm:px-10 lg:px-16">
           <div className="max-w-xl">
             <p className="text-eyebrow uppercase tracking-wide text-green-pale">
-              Bhaktapur&apos;s trusted choice for +2 &amp; Bachelor&apos;s
-              education
+              Bhaktapur&apos;s trusted choice for School, +2 &amp;
+              Bachelor&apos;s education
             </p>
 
             <h1 className="mt-4 font-display text-hero text-white">

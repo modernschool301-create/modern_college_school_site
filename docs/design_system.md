@@ -12,10 +12,9 @@ Guiding principles:
 
 1. **Green is the atmosphere; the bright green is the spotlight.** The site feels green everywhere through deep anchors and pale tints, but the one vivid signature green is rationed — it appears only on the actions we want taken (Apply, key links, active states). Its scarcity is what makes it powerful.
 2. **Editorial, not brochure.** Generous whitespace, confident large type, strong photography given room to breathe, asymmetric rhythm. A 30-year institution can afford to look calm and established, not busy.
-3. **The photography and the hero video carry the persuasion.** Design frames real imagery; it never competes with it. Great media with restrained design beats clever design with weak media.
+3. **The photography and the hero video carry the persuasion.** Design frames real imagery; it never competes with it. Great media with restraine design beats clever design with weak media.
 4. **Spend boldness in one place.** The full-bleed video hero is the signature moment. Everything around it stays quiet and disciplined.
 5. **Quality floor, always:** responsive to mobile, visible keyboard focus, `prefers-reduced-motion` respected, fast load.
-6. **Full-width and fluid on desktop, mobile-first everywhere.** The site fills the screen — full-bleed backgrounds with comfortably-capped content — never a narrow centered column with large empty side gaps, and it works at any screen resolution from small phones to ultra-wide monitors while staying mobile-first.
 
 ---
 
@@ -136,16 +135,7 @@ An 8px-based scale for rhythm. Sections breathe — vertical padding is generous
 | `--space-16` | `64px` |
 | `--space-24` | `96px` |
 
-### Width, full-bleed & responsiveness
-
-- **Content container width:** `min(1440px, 100%)`, centered, with fluid side padding `clamp(1rem, 5vw, 4rem)`. On a phone this is full width with a small (1rem) gutter; the padding grows smoothly as the screen widens; past ~1440px the content stops widening so text never runs uncomfortably long, while backgrounds keep filling the screen. Nothing snaps — it flows, which is what makes it work at any resolution.
-- **Full-bleed elements** — the hero video, coloured section bands, the footer, and large image/gallery grids — span the full viewport width (`100vw`, no max-width, no side gaps). They break out of the content container.
-- **The rhythm:** full-bleed *background*, comfortable-width *content* inside it. A section's coloured band or image reaches the screen edges; its text and cards sit within the `min(1440px, 100%)` measure with the clamp padding.
-- **Readable measure:** never stretch a paragraph or a single line of body text edge-to-edge on a wide monitor — keep running text to roughly a 75-character measure. Full-bleed is for visuals and background bands, not running text.
-- **Fluid grids:** card/tile sections use `repeat(auto-fit, minmax(280px, 1fr))` so they reflow automatically (e.g. 4-up desktop → 2-up tablet → 1-up mobile) without hand-written breakpoints for each — robust at resolutions never explicitly designed for.
-- **Prefer fluid sizing:** reach for `clamp()`/viewport-based values over fixed per-breakpoint jumps throughout, so the layout scales smoothly at every width rather than only at the tested breakpoints.
-- **Mobile is unaffected:** single column, full width with the 1rem gutter, mobile-first throughout.
-- **Section vertical padding:** `clamp(64px, 10vw, 96px)`.
+Section vertical padding: `clamp(--space-16, 10vw, --space-24)`. Content max-width: `1200px`, centered, with `--space-6` gutters on mobile.
 
 ---
 
@@ -209,18 +199,6 @@ The full-bleed hero video is the site's boldest moment. It must be *impressive a
 
 **Navigation** — clean top bar, `--paper`/transparent over the hero then solid on scroll. Logo left, links center/right, a persistent `Apply now` primary button far right (the CTA should always be reachable). Mobile: hamburger to a full-height sheet.
 
-*Navigation sizing & scrim (tokens in `globals.css` `:root`):*
-
-| Token | Value | Role |
-| --- | --- | --- |
-| `--nav-height` | `80px` | Bar height — taller so the larger links + logo breathe. |
-| `--nav-logo-height` | `56px` | Visible logo height in the bar (logos delivered with Cloudinary `e_trim` so the mark fills it — no baked-in transparent padding). |
-| `--nav-link-size` | `1.0625rem` (17px) | Nav link size, weight 500, in BOTH states. |
-| `--nav-scrim-height` | `100px` | Height of the over-hero legibility scrim. |
-| `--nav-scrim` | `linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0))` | Subtle top-down dark gradient behind the nav, **over-hero state only**, so white links stay legible over LIGHT parts of the hero video without reading as a solid bar. Removed in the solid/scrolled state (which has `--paper`). |
-
-Over-hero links also carry a `text-shadow: 0 1px 3px rgba(0,0,0,0.4)` (the `.nav-legible` helper) on top of the scrim. All nav links are keyboard-focusable with the standard `--green-signature` focus ring, carry `aria-current` on the active page, and hover to an underline.
-
 **Eyebrows** — small `--text-eyebrow` in `--green-brand` above section titles, sentence case, subtle letter-spacing. Use only where they encode something real (section topic), not as decoration.
 
 **Badges/pills** — `--radius-full`, pale-green background with `--green-ink` text for neutral tags; semantic colours for status.
@@ -255,7 +233,6 @@ Non-negotiable on every page: responsive to mobile; visible keyboard focus on al
 ## 12. Implementation Notes
 
 - **Tailwind v4:** express these tokens as CSS custom properties in the global stylesheet's `@theme` block so they're available as utilities and in arbitrary values. Keep the token names above as the single source of truth.
-- **Layout utilities (Section 5 width rules):** define one reusable content-container utility (max-width `min(1440px, 100%)` + `clamp(1rem, 5vw, 4rem)` side padding) and apply it to content; full-bleed sections omit it and set full viewport width. Standardize the "full-bleed band with contained inner content" wrapper (edge-to-edge background, inner container for text/cards) and the `repeat(auto-fit, minmax(280px, 1fr))` grid, so both patterns are applied consistently on every page rather than re-invented per page.
 - **Fonts:** load Bricolage Grotesque, Hanken Grotesk, and Geist Mono via `next/font` (self-hosted, no layout shift, no external request at runtime) rather than a `<link>` — better performance and privacy.
 - **One system, referenced everywhere:** every Phase 1+ build prompt names this doc and the `frontend-design` skill. Components derive their colour, type, radius, and spacing from these tokens — nothing hardcoded per page.
 - **Dark mode:** not required for this build (a marketing site is fine light-only). If added later, derive from these tokens rather than retrofitting.

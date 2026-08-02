@@ -29,7 +29,10 @@ const PROGRAMMES = [
 
 export function ProgrammesOverview() {
   return (
-    <Band tone="paper">
+    // mist, not paper: in the homepage order this sits between ThreeBenefits
+    // (paper) and VoicePreview (paper), so it is the quiet green break between
+    // them.
+    <Band tone="mist">
       <Reveal>
         <p className="text-eyebrow uppercase tracking-wide text-green-brand">
           What we offer

@@ -73,7 +73,11 @@ const FEATURES = [
 
 export function FeaturesStrip() {
   return (
-    <Band tone="mist">
+    // paper, not mist: the facilities strip is the CLEAN, quiet band that
+    // follows the dark NewsTeaser (forest) and precedes ClosingCTA (forest).
+    // The icon chips keep their --green-pale fill, which reads as the accent it
+    // is against paper.
+    <Band tone="paper">
       <Reveal>
         <p className="text-eyebrow uppercase tracking-wide text-green-brand">
           Why Modern

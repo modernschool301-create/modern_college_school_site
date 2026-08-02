@@ -1,5 +1,6 @@
 import { HeroNavMode } from '@/components/nav-hero-context';
 import { Hero } from '@/components/home/hero';
+import { LeadershipMessages } from '@/components/home/leadership-messages';
 import { ThreeBenefits } from '@/components/home/three-benefits';
 import { VoicePreview } from '@/components/home/voice-preview';
 import { ProgrammesOverview } from '@/components/home/programmes-overview';
@@ -40,18 +41,33 @@ export default async function HomePage() {
       {/* Tell the nav this page owns a hero (starts transparent, solid on scroll). */}
       <HeroNavMode />
 
-      {/* Story-first order: hero → value prop + stats (one block) → human
-          voices → programmes → supporting facilities → news → closing CTA. */}
+      {/* Story-first order: hero → the school's own voice → value prop + stats
+          → what we offer → what students say → what's happening → the
+          facilities behind it → closing CTA.
+
+          Band tones alternate deliberately and NO two neighbours share one:
+            Hero            forest  (not a Band; bg-green-forest)
+            Leadership      mist
+            ThreeBenefits   paper
+            Programmes      mist
+            Voice           paper
+            News            forest  ← the dark, contrasting break in the page
+            Facilities      paper   ← clean and quiet after it
+            ClosingCTA      forest
+          Leadership renders NOTHING at zero published rows, which would put
+          forest (hero) next to paper (benefits) — still distinct, so the
+          sequence holds either way. */}
       <Hero media={media} />
+      <LeadershipMessages />
       <ThreeBenefits
         statYears={settings.stat_years}
         statStudents={settings.stat_students}
         statTeachers={settings.stat_teachers}
       />
-      <VoicePreview />
       <ProgrammesOverview />
-      <FeaturesStrip />
+      <VoicePreview />
       <NewsTeaser />
+      <FeaturesStrip />
       <ClosingCTA />
 
       {/* Mobile-only persistent Apply button. */}

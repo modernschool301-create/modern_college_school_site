@@ -445,6 +445,66 @@
 }
 
 /* ============================================================================
+   Leadership message dialog (components/home/leadership-message-cards.tsx).
+   The same native <dialog> + showModal() mechanics as the lightbox above —
+   browser-owned focus trap, top layer, page inertness, Escape-to-close — but a
+   READING panel rather than a full-screen viewer, so it keeps the site's card
+   treatment (--surface, a large radius, a hairline border).
+
+   Desktop: a centred panel on a comfortable measure, capped short of the
+   viewport so a long message scrolls INSIDE the panel (the flex column below
+   plus overflow-y:auto on the body region) rather than growing off-screen.
+   Mobile: a near-full-screen sheet, because a 400px-wide centred card with its
+   own scrollbar is worse than simply owning the screen.
+
+   `display: flex` is scoped to [open] deliberately. Author styles beat the UA
+   sheet regardless of specificity, so an unscoped `display` here would defeat
+   the UA's `dialog:not([open]) { display: none }` and leave the panel on the
+   page permanently.
+   ============================================================================ */
+.leadership-dialog {
+  width: min(100% - 2 * var(--space-6), 720px);
+  max-height: calc(100dvh - 2 * var(--space-8));
+  margin: auto; /* centred in the viewport by the UA's dialog positioning */
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  color: var(--ink);
+  overflow: hidden; /* clip the header/body to the radius; the body scrolls */
+}
+.leadership-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.leadership-dialog::backdrop {
+  background-color: rgb(14 42 28 / 0.6); /* --green-ink, softened */
+}
+
+/* Near-full-screen sheet on small screens. */
+@media (max-width: 639px) {
+  .leadership-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+/* The open fade is scoped to `no-preference`, the same as .lightbox and
+   .reveal: with reduced motion the panel simply appears, with no transition to
+   suppress. */
+@media (prefers-reduced-motion: no-preference) {
+  .leadership-dialog[open],
+  .leadership-dialog[open]::backdrop {
+    animation: lightbox-fade-in var(--dur-fast) var(--ease-soft);
+  }
+}
+
+/* ============================================================================
    Motion baseline — scroll reveal (Section 6). The hidden start-state is scoped
    to `no-preference`, so with reduced motion the element is simply visible from
    the start; the JS still toggles data-visible harmlessly.
@@ -478,6 +538,81 @@
   .reveal-stagger[data-visible="true"] > *:nth-child(3) { transition-delay: 120ms; }
   .reveal-stagger[data-visible="true"] > *:nth-child(4) { transition-delay: 180ms; }
   .reveal-stagger[data-visible="true"] > *:nth-child(5) { transition-delay: 240ms; }
+}
+
+/* ============================================================================
+   Homepage statistic cards (components/home/three-benefits.tsx). Additive
+   polish on top of the existing count-up and Reveal stagger — the figures
+   themselves behave exactly as before.
+
+   ONE custom property, --stat-accent, gives each card its own identity: it
+   colours the small rule above the figure AND a barely-there wash down from the
+   card's top edge. Each card sets it to an EXISTING green token, stepping
+   pale → brand → forest across the row, so the three read as a deliberate
+   gradation rather than three arbitrary colours. --green-signature is
+   deliberately absent: §1 rations it to CTAs and active states, and spending it
+   on decoration is exactly what would stop it reading as an action colour.
+   ============================================================================ */
+.stat-card {
+  --stat-accent: var(--green-brand); /* fallback; each card sets its own */
+  background-color: var(--surface);
+  /* The wash fades out within the first 96px, so it reads as a tint at the top
+     of the card and never as a coloured panel. */
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--stat-accent) 10%, transparent),
+    transparent 96px
+  );
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft);
+}
+/* Hover lifts by SHADOW rather than translateY, unlike .content-card: these
+   cards are direct children of a .reveal-stagger, which owns their `transform`
+   for the entrance — a hover transform would fight it mid-reveal. */
+.stat-card:hover {
+  border-color: var(--green-pale);
+  box-shadow: 0 6px 20px -12px color-mix(in oklab, var(--green-ink) 40%, transparent);
+}
+
+/* The accent rule is a PSEUDO-ELEMENT, not a <span>: these cards are the `div`
+   children of a <dl>, where the only permitted content is dt/dd. */
+.stat-card::before {
+  content: "";
+  flex: none;
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--stat-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The rule draws itself out as the row reveals, chasing each card's own
+     60ms-staggered entrance. Scoped to `no-preference`, like every other
+     motion in this file, so with reduced motion the rule is simply drawn from
+     the start — the ONLY thing suppressed is the movement. */
+  .stat-card::before {
+    transform: scaleX(0);
+    transition: transform var(--dur) var(--ease-soft);
+  }
+  .reveal-stagger[data-visible="true"] .stat-card::before {
+    transform: scaleX(1);
+    transition-delay: 60ms;
+  }
+  .reveal-stagger[data-visible="true"] > .stat-card:nth-child(2)::before {
+    transition-delay: 120ms;
+  }
+  .reveal-stagger[data-visible="true"] > .stat-card:nth-child(3)::before {
+    transition-delay: 180ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card {
+    transition: none;
+  }
 }
 
 /* Text shadow so white nav text stays legible over the LIGHT parts of the hero

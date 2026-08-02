@@ -18,10 +18,17 @@ import { cloudinaryImage, FILLER_IMAGE } from '@/lib/cloudinary-url';
 //   • { publicId: null }   → the shared FILLER_IMAGE, through the SAME 4:3
 //                            transform, so a filler card and a real card are
 //                            identical in shape.
+//
+// `gravity` is an OPTIONAL Cloudinary gravity for that 4:3 crop — 'g_face' for a
+// portrait, so a head is not sliced off by the default centre crop. It applies
+// to a REAL image only: the filler is not a portrait, so it keeps the plain
+// centre crop and a face-detect miss can never re-frame it. Omitted (the default
+// for every existing caller) the transform is byte-identical to what it was.
 type Media = {
   cloudName: string;
   publicId: string | null;
   alt: string;
+  gravity?: string;
 };
 
 function renderMedia(media: Media | undefined, isLink: boolean): ReactNode {
@@ -35,7 +42,9 @@ function renderMedia(media: Media | undefined, isLink: boolean): ReactNode {
   const src = cloudinaryImage(
     media.cloudName,
     media.publicId ?? FILLER_IMAGE,
-    'c_fill,ar_4:3,w_800',
+    isFiller || !media.gravity
+      ? 'c_fill,ar_4:3,w_800'
+      : `c_fill,${media.gravity},ar_4:3,w_800`,
   );
 
   return (

@@ -45,19 +45,27 @@ export async function NewsTeaser() {
   );
 
   return (
-    <Band tone="mist">
+    // forest, not mist: in the homepage order this is the one CONTRASTING
+    // break in a run of light bands (Voice above is paper, Facilities below is
+    // paper), and a dark band is what makes "what's happening right now" read
+    // as a different kind of content from the evergreen sections around it.
+    // The cards below stay --surface with their own dark text, so they gain
+    // contrast rather than losing it; only this header needed re-colouring for
+    // legibility on the dark ground (§11 — white/--green-pale on green, never
+    // --green-brand, which fails contrast there).
+    <Band tone="forest">
       <Reveal className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-eyebrow uppercase tracking-wide text-green-brand">
+          <p className="text-eyebrow uppercase tracking-wide text-green-pale">
             Latest
           </p>
-          <h2 className="mt-2 font-display text-h2 text-green-ink">
+          <h2 className="mt-2 font-display text-h2 text-white">
             News &amp; events
           </h2>
         </div>
         <Link
           href="/news"
-          className="text-small font-medium text-green-brand hover:underline"
+          className="text-small font-medium text-green-pale hover:underline"
         >
           View all news →
         </Link>
