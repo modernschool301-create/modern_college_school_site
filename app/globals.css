@@ -114,7 +114,7 @@
   /* Navigation (design_system.md Section 8 → "Navigation sizing & scrim").
      Bar height, the over-hero legibility scrim, and the shared nav link size. */
   --nav-height: 80px;                 /* taller bar so larger links + logo breathe */
-  --nav-logo-height: 56px;            /* visible logo height in the bar */
+  --nav-logo-height: 38px;            /* visible logo height in the bar */
   --nav-link-size: 1.0625rem;         /* 17px links, medium weight */
   --nav-scrim-height: 100px;          /* top-down scrim behind the over-hero nav */
   --nav-scrim: linear-gradient(
