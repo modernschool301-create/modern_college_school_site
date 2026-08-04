@@ -445,6 +445,98 @@
 }
 
 /* ============================================================================
+   Leadership scroll track (components/home/leadership-message-cards.tsx).
+
+   A horizontal scroller, NOT card-grid-media. Five leaders wrapped into a
+   3-column grid cost two full rows of homepage height, and that grows with
+   every row the school adds. Here the cards sit on ONE row and the rest are
+   reached by scroll or swipe.
+
+   It stays a GRID (grid-auto-flow: column), never a flex row. .content-card is
+   `grid-row: span 5` + `grid-template-rows: subgrid`; as a FLEX item that
+   subgrid resolves to `none`, the five slots fall into auto rows, and the cards
+   lose the slot-for-slot alignment (media, meta, title, body, footer) they
+   share everywhere else on the site — footers in particular stop lining up.
+   Column flow keeps them grid items, so only the axis changes.
+
+   Card width per breakpoint is grid-auto-columns: ~86% on mobile so the next
+   card PEEKS and the row reads as scrollable, then exactly 2 and 3 cards to the
+   content width at card-grid-media's own 640/1024 breakpoints.
+   ============================================================================ */
+.leadership-track {
+  display: grid;
+  grid-auto-flow: column;
+  /* The five tracks the cards subgrid into — the same shape as .content-card's
+     own fallback rows, declared here because column flow needs explicit rows to
+     place a `span 5` card in one column. */
+  grid-template-rows: auto auto auto 1fr auto;
+  grid-auto-columns: 86%;
+  gap: var(--space-6);
+  overflow-x: auto;
+  /* A swipe that runs off the end of the track scrolls the track, not the page
+     — and never triggers the browser's back gesture. */
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  /* Top: room for the card's 2px hover lift, which would otherwise be clipped
+     at the track's edge (`overflow-x: auto` computes overflow-y to `auto` too).
+     Bottom: a clear gap between the cards and the rail below them. Padding on a
+     subgrid parent insets every card's tracks equally, so alignment is
+     untouched. */
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-4);
+  /* A VISIBLE, branded rail. The scrollbar is the honest affordance here: it
+     shows at a glance how much more there is and how far along you are, and it
+     can be dragged. Hiding it and relying on the peeking card alone left the
+     row looking static.
+     Both syntaxes are set on purpose. Firefox and current Chrome honour the
+     standard `scrollbar-width`/`scrollbar-color` pair (and Chrome ignores the
+     ::-webkit- rules once `scrollbar-color` is present); older WebKit/Blink
+     falls back to the pseudo-elements below. Same result either way: a
+     --green-pale rail with a --green-brand thumb, sitting on the --green-mist
+     band. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-brand) var(--green-pale);
+}
+.leadership-track::-webkit-scrollbar {
+  height: 8px;
+}
+.leadership-track::-webkit-scrollbar-track {
+  background-color: var(--green-pale);
+  border-radius: var(--radius-full);
+}
+.leadership-track::-webkit-scrollbar-thumb {
+  background-color: var(--green-brand);
+  border-radius: var(--radius-full);
+}
+.leadership-track::-webkit-scrollbar-thumb:hover {
+  background-color: var(--green-ink);
+}
+/* Every card is a snap point, so mandatory snapping always has somewhere near
+   to land — including for a card scrolled into view by keyboard focus. */
+.leadership-track > .content-card {
+  scroll-snap-align: start;
+}
+@media (min-width: 640px) {
+  .leadership-track {
+    grid-auto-columns: calc((100% - var(--space-6)) / 2);
+  }
+}
+@media (min-width: 1024px) {
+  .leadership-track {
+    grid-auto-columns: calc((100% - 2 * var(--space-6)) / 3);
+  }
+}
+/* Animated scrolling only where motion is welcome (Section 6). The snap
+   POSITIONS stay in both cases — it is the animation between them that goes, so
+   a reduced-motion visitor still gets a card-aligned rest position, just
+   instantly. */
+@media (prefers-reduced-motion: no-preference) {
+  .leadership-track {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ============================================================================
    Leadership message dialog (components/home/leadership-message-cards.tsx).
    The same native <dialog> + showModal() mechanics as the lightbox above —
    browser-owned focus trap, top layer, page inertness, Escape-to-close — but a

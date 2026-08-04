@@ -131,7 +131,16 @@ export function HomePopup({
         onClick={dismiss}
         className="absolute inset-0 cursor-default bg-green-ink/70"
       />
-      <div className="relative z-10 w-full max-w-sm">
+      {/* The width cap is RESPONSIVE. It used to be a flat max-w-sm (384px),
+          which is right on a phone and far too small on a desktop, where the
+          banner sat as a stamp in the middle of the screen.
+          The step stops at max-w-lg (512px) rather than going wider: the banner
+          is portrait or square, so width buys height fast — a 3:4 banner at
+          512px is 683px tall and still clears a 768px laptop viewport with the
+          ✕ on screen, where an xl (576px) panel would be 768px tall and push it
+          off. It also keeps the delivered image (c_limit,w_800 — see
+          app/(public)/page.tsx) at ~1.6× the CSS width, so it stays crisp. */}
+      <div className="relative z-10 w-full max-w-sm sm:max-w-md md:max-w-lg">
         <button
           type="button"
           aria-label="Close"

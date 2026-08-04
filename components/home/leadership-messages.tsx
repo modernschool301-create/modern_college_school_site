@@ -48,6 +48,16 @@ export async function LeadershipMessages() {
         <h2 className="mt-2 max-w-2xl font-display text-h2 text-green-ink">
           A word from the people who lead Modern
         </h2>
+
+        {/* Only when there is something off-screen to reach. Three cards is the
+            widest the track shows at once, so at three or fewer the row does
+            not scroll and a line telling the visitor to scroll it would be a
+            lie. The count is the published rows, the same set the track gets. */}
+        {messages.length > 3 && (
+          <p className="mt-3 text-small text-ink-muted">
+            Scroll to read more messages from our leadership.
+          </p>
+        )}
       </Reveal>
 
       {/* The cards bring their own Reveal (it must wrap the grid only, not the
