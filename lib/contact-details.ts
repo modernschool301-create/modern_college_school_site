@@ -11,5 +11,9 @@ export const SCHOOL_CONTACT = {
     { display: '01-6611411', dial: '+97716611411' },
     { display: '01-6619681', dial: '+97716619681' },
   ],
-  emails: ['info@modern.edu.np', 'universalmoderncollege@gmail.com'],
+  emails: [
+    'info@modern.edu.np',
+    'universalmoderncollege@gmail.com',
+    'moderncollegebkt@gmail.com',
+  ],
 } as const;

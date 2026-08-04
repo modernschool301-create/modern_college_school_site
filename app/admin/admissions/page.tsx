@@ -3,10 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { AdmissionFormsSection } from '@/components/admin/admissions/admission-forms';
 import { ManagementStreamsSection } from '@/components/admin/admissions/management-streams';
 import {
-  MANAGEMENT_FORM_ID,
   type AdmissionForm,
   type ManagementStreamRow,
 } from '@/lib/admission-schemas';
+import { managementOpenWithNoStreamsFromRows } from '@/lib/admissions-warning';
 
 // /admin/admissions (PRD 29). The CONFIGURATION half of admissions — what the
 // three forms say and whether they are open, plus the Management stream list.
@@ -46,18 +46,16 @@ export default async function AdminAdmissionsPage() {
   const forms = (formsResult.data ?? []) as AdmissionForm[];
   const streams = (streamsResult.data ?? []) as ManagementStreamRow[];
 
-  // THE ADMIN-SIDE HALF OF THE EMPTY-PICKER GUARD (PRD 21.1, Decision 5).
-  //
-  // The public half already exists and is the safety net: /apply/plus_two_management
-  // shows "admissions opening soon" rather than an empty picker, so this state
-  // is never broken for an applicant. But it IS silently unproductive — the form
-  // reads as open on /admissions while nobody can actually apply — and the only
-  // person who can fix it is looking at this page. Hence a warning here, and
-  // deliberately not a block: refusing to publish would be the system overruling
-  // an admin who may be about to add the streams in the next minute.
-  const managementForm = forms.find((f) => f.id === MANAGEMENT_FORM_ID);
-  const showEmptyStreamWarning =
-    !!managementForm?.is_published && streams.every((s) => !s.is_available);
+  // THE ADMIN-SIDE HALF OF THE EMPTY-PICKER GUARD (PRD 21.1, Decision 5). The
+  // rule itself now lives in lib/admissions-warning.ts, because the dashboard
+  // raises the same warning and the two must never disagree; this page just
+  // hands it the rows it already has. Deliberately a warning and not a block:
+  // refusing to publish would be the system overruling an admin who may be
+  // about to add the streams in the next minute.
+  const showEmptyStreamWarning = managementOpenWithNoStreamsFromRows(
+    forms,
+    streams,
+  );
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
