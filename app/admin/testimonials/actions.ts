@@ -11,12 +11,14 @@ export type TestimonialFormState = { error: string | null };
 const SAVE_FAILED =
   'Something went wrong saving this testimonial. Please try again.';
 
-// The public Student's Voice page (PRD 18) is the whole public refresh surface;
-// the admin list also revalidates so a change shows without a hard reload. Note
-// the route-name mismatch: the module is `testimonials`, the public route is
+// Two public surfaces: the Student's Voice page (PRD 18) and the homepage
+// preview, which shows the first two published testimonials. The admin list
+// also revalidates so a change shows without a hard reload. Note the route-name
+// mismatch: the module is `testimonials`, the public route is
 // `/students-voice`.
 function revalidatePublic() {
   revalidatePath('/students-voice');
+  revalidatePath('/'); // homepage Student's Voice preview
 }
 
 type TestimonialFields = {
