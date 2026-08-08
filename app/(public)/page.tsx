@@ -4,6 +4,7 @@ import { LeadershipMessages } from '@/components/home/leadership-messages';
 import { ThreeBenefits } from '@/components/home/three-benefits';
 import { VoicePreview } from '@/components/home/voice-preview';
 import { ProgrammesOverview } from '@/components/home/programmes-overview';
+import { AchievementsPreview } from '@/components/home/achievements-preview';
 import { FeaturesStrip } from '@/components/home/features-strip';
 import { LocationMap } from '@/components/home/location-map';
 import { NewsTeaser } from '@/components/home/news-teaser';
@@ -51,6 +52,9 @@ export default async function HomePage() {
             Leadership      mist
             ThreeBenefits   paper
             Programmes      mist
+            Achievements    surface ← renders nothing at zero published rows,
+                                      which puts mist next to paper: still
+                                      distinct, so the sequence holds either way
             Voice           paper
             News            forest  ← the dark, contrasting break in the page
             Facilities      paper   ← clean and quiet after it
@@ -67,6 +71,7 @@ export default async function HomePage() {
         statTeachers={settings.stat_teachers}
       />
       <ProgrammesOverview />
+      <AchievementsPreview />
       <VoicePreview />
       <NewsTeaser />
       <FeaturesStrip />

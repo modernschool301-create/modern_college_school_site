@@ -1,5 +1,4 @@
 import { Band } from '@/components/band';
-import { Reveal } from '@/components/reveal';
 import { createClient } from '@/lib/supabase/server';
 import {
   LeadershipMessageCards,
@@ -40,28 +39,11 @@ export async function LeadershipMessages() {
   if (messages.length === 0) return null;
 
   return (
+    // The Band — and therefore the tone — stays here on the server side. The
+    // heading, the conditional "scroll for more" line, the track and the shared
+    // dialog all come from ScrollableCardDialog by way of the client component,
+    // which is where the item count that governs them is already known.
     <Band tone="mist">
-      <Reveal>
-        <p className="text-eyebrow uppercase tracking-wide text-green-brand">
-          Our leadership
-        </p>
-        <h2 className="mt-2 max-w-2xl font-display text-h2 text-green-ink">
-          A word from the people who lead Modern
-        </h2>
-
-        {/* Only when there is something off-screen to reach. Three cards is the
-            widest the track shows at once, so at three or fewer the row does
-            not scroll and a line telling the visitor to scroll it would be a
-            lie. The count is the published rows, the same set the track gets. */}
-        {messages.length > 3 && (
-          <p className="mt-3 text-small text-ink-muted">
-            Scroll to read more messages from our leadership.
-          </p>
-        )}
-      </Reveal>
-
-      {/* The cards bring their own Reveal (it must wrap the grid only, not the
-          dialog beside it — see the client component). */}
       <LeadershipMessageCards messages={messages} cloudName={cloudName} />
     </Band>
   );
