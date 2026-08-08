@@ -5,6 +5,7 @@ import { ThreeBenefits } from '@/components/home/three-benefits';
 import { VoicePreview } from '@/components/home/voice-preview';
 import { ProgrammesOverview } from '@/components/home/programmes-overview';
 import { FeaturesStrip } from '@/components/home/features-strip';
+import { LocationMap } from '@/components/home/location-map';
 import { NewsTeaser } from '@/components/home/news-teaser';
 import { ClosingCTA } from '@/components/home/closing-cta';
 import { StickyApplyCta } from '@/components/home/sticky-apply-cta';
@@ -53,6 +54,7 @@ export default async function HomePage() {
             Voice           paper
             News            forest  ← the dark, contrasting break in the page
             Facilities      paper   ← clean and quiet after it
+            LocationMap     mist
             ClosingCTA      forest
           Leadership renders NOTHING at zero published rows, which would put
           forest (hero) next to paper (benefits) — still distinct, so the
@@ -68,6 +70,7 @@ export default async function HomePage() {
       <VoicePreview />
       <NewsTeaser />
       <FeaturesStrip />
+      <LocationMap />
       <ClosingCTA />
 
       {/* Mobile-only persistent Apply button. */}
